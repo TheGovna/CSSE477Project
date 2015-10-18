@@ -47,6 +47,9 @@ public class Protocol {
     public static final int MOVED_PERMANENTLY_CODE = 301;
     public static final String MOVED_PERMANENTLY_TEXT = "Moved Permanently";
     
+    public static final int RESOURCE_NOT_MODIFIED_CODE = 304;
+    public static final String RESOURCE_NOT_MODIFIED_TEXT = "Unmodified";
+    
     public static final int BAD_REQUEST_CODE = 400;
     public static final String BAD_REQUEST_TEXT = "Bad Request";
     
