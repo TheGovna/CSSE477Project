@@ -65,21 +65,21 @@ public class GetRequest extends AbstractRequest {
 				file = new File(location);
 				if(file.exists()) {
 					// Lets create 200 OK response
-					response = HttpResponseFactory.create200OK(file, Protocol.CLOSE);
+					response = HttpResponseFactory.createRequest(file, Protocol.CLOSE);
 				}
 				else {
 					// File does not exist so lets create 404 file not found code
-					response = HttpResponseFactory.create404NotFound(Protocol.CLOSE);
+					response = HttpResponseFactory.createRequest("404",Protocol.CLOSE);
 				}
 			}
 			else { // Its a file
 				// Lets create 200 OK response
-				response = HttpResponseFactory.create200OK(file, Protocol.CLOSE);
+				response = HttpResponseFactory.createRequest(file, Protocol.CLOSE);
 			}
 		}
 		else {
 			// File does not exist so lets create 404 file not found code
-			response = HttpResponseFactory.create404NotFound(Protocol.CLOSE);
+			response = HttpResponseFactory.createRequest("404",Protocol.CLOSE);
 		}
 	}
 
