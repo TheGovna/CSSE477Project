@@ -25,7 +25,10 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.HashMap;
 
+import protocol.AbstractRequest;
+import protocol.GetRequest;
 import protocol.HttpRequest;
 import protocol.HttpResponse;
 import protocol.HttpResponseFactory;
@@ -43,10 +46,12 @@ import protocol.ProtocolException;
 public class ConnectionHandler implements Runnable {
 	private Server server;
 	private Socket socket;
+	private HashMap<String, AbstractRequest> map;
 	
 	public ConnectionHandler(Server server, Socket socket) {
 		this.server = server;
 		this.socket = socket;
+		this.map.put(Protocol.GET, new GetRequest(this.server));
 	}
 	
 	/**
@@ -140,7 +145,12 @@ public class ConnectionHandler implements Runnable {
 				// "request.version" string ignoring the case of the letters in both strings
 				// TODO: Fill in the rest of the code here
 			}
-			else if(request.getMethod().equalsIgnoreCase(Protocol.GET)) {
+			
+			AbstractRequest req = map.get(request.getMethod());
+			req.setRequest(request);
+			req.execute();
+			
+			/*else if(request.getMethod().equalsIgnoreCase(Protocol.GET)) {
 //				Map<String, String> header = request.getHeader();
 //				String date = header.get("if-modified-since");
 //				String hostName = header.get("host");
@@ -176,7 +186,7 @@ public class ConnectionHandler implements Runnable {
 					// File does not exist so lets create 404 file not found code
 					response = HttpResponseFactory.create404NotFound(Protocol.CLOSE);
 				}
-			}
+			}*/
 		}
 		catch(Exception e) {
 			e.printStackTrace();
