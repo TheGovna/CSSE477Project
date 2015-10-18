@@ -39,6 +39,7 @@ public class Protocol {
     // Some useful protocol elements
     public static final String VERSION = "HTTP/1.1";
     public static final String GET = "GET";
+    public static final String POST = "POST";
     
     // Some useful http codes and text
     public static final int OK_CODE = 200;

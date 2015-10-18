@@ -35,7 +35,7 @@ public abstract class AbstractRequest {
 	HttpResponse response;
 	Server server;
 	
-	public abstract void execute();
+	public abstract void execute() throws Exception;
 	
 	public void setRequest(HttpRequest r) {
 		this.request = r;

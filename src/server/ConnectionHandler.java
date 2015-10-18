@@ -32,6 +32,7 @@ import protocol.GetRequest;
 import protocol.HttpRequest;
 import protocol.HttpResponse;
 import protocol.HttpResponseFactory;
+import protocol.PostRequest;
 import protocol.Protocol;
 import protocol.ProtocolException;
 
@@ -52,6 +53,7 @@ public class ConnectionHandler implements Runnable {
 		this.server = server;
 		this.socket = socket;
 		this.map.put(Protocol.GET, new GetRequest(this.server));
+		this.map.put(Protocol.POST, new PostRequest(this.server));
 	}
 	
 	/**
@@ -106,14 +108,16 @@ public class ConnectionHandler implements Runnable {
 			// Protocol.BAD_REQUEST_CODE and Protocol.NOT_SUPPORTED_CODE
 			int status = pe.getStatus();
 			if(status == Protocol.BAD_REQUEST_CODE) {
-				response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
+//				response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
+				response = HttpResponseFactory.create400BadRequest(Protocol.CLOSE);
 			}
 			// TODO: Handle version not supported code as well
 		}
 		catch(Exception e) {
 			e.printStackTrace();
 			// For any other error, we will create bad request response as well
-			response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
+//			response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
+			response = HttpResponseFactory.create400BadRequest(Protocol.CLOSE);
 		}
 		
 		if(response != null) {
@@ -148,6 +152,7 @@ public class ConnectionHandler implements Runnable {
 			
 			AbstractRequest req = map.get(request.getMethod());
 			req.setRequest(request);
+			System.out.println(req);
 			req.execute();
 			
 			/*else if(request.getMethod().equalsIgnoreCase(Protocol.GET)) {
@@ -197,7 +202,8 @@ public class ConnectionHandler implements Runnable {
 		// So this is a temporary patch for that problem and should be removed
 		// after a response object is created for protocol version mismatch.
 		if(response == null) {
-			response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
+//			response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
+			response = HttpResponseFactory.create400BadRequest(Protocol.CLOSE);
 		}
 		
 		try{
