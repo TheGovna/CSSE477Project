@@ -1,5 +1,5 @@
 /*
- * PostRequest.java
+ * GetRequest.java
  * Oct 18, 2015
  *
  * Simple Web Server (SWS) for EE407/507 and CS455/555
@@ -25,29 +25,22 @@
  * NY 13699-5722
  * http://clarkson.edu/~rupakhcr
  */
-
+ 
 package protocol;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Scanner;
 
 import server.Server;
 
-public class PostRequest extends AbstractRequest {
-
-	public PostRequest() {}
-
-	public PostRequest(Server server) {
+public class DeleteRequest extends AbstractRequest {
+	
+	public DeleteRequest() {}
+	
+	public DeleteRequest(Server server) {
 		this.server = server;
 	}
-
-	public PostRequest(HttpRequest request, Server server) {
+	
+	public DeleteRequest(HttpRequest request, Server server) {
 		this.request = request;
 		this.server = server;
 	}
@@ -57,27 +50,24 @@ public class PostRequest extends AbstractRequest {
 	 */
 	@Override
 	public HttpResponse execute() throws Exception {
-		// Handling POST request here
+		// Handling DELETE request here
 		// Get relative URI path from request
 		String uri = request.getUri();
 		// Get root directory path from server
 		String rootDirectory = server.getRootDirectory();
 		// Combine them together to form absolute file path
 		File file = new File(rootDirectory + uri);
-		
 		// Check if the file exists
 		if(file.exists()) {
 			if(file.isDirectory()) {
 				// Look for default index.html file in a directory
 				String location = rootDirectory + uri + System.getProperty("file.separator") + Protocol.DEFAULT_FILE;
 				file = new File(location);
-				BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-			    bw.write(new String(this.request.getBody()));
-			    bw.flush();
-			    bw.close();
 				if(file.exists()) {
+					file.delete();
+					
 					// Lets create 200 OK response
-					response = HttpResponseFactory.createRequestWithFile(file, Protocol.CLOSE);
+					response = HttpResponseFactory.createRequestWithFile(null, Protocol.CLOSE);
 				}
 				else {
 					// File does not exist so lets create 404 file not found code
@@ -85,23 +75,17 @@ public class PostRequest extends AbstractRequest {
 				}
 			}
 			else { // Its a file
-				//Files.write(Paths.get(rootDirectory + uri), new String(this.request.getBody()).getBytes(), StandardOpenOption.APPEND);
-				BufferedWriter bw = new BufferedWriter(new FileWriter(file,true));
-				bw.write(new String(this.request.getBody()));
-			    bw.flush();
-			    bw.close();
+				file.delete();
+				
 				// Lets create 200 OK response
-				response = HttpResponseFactory.createRequestWithFile(file, Protocol.CLOSE);
+				response = HttpResponseFactory.createRequestWithFile(null, Protocol.CLOSE);
 			}
 		}
 		else {
-			PrintWriter writer = new PrintWriter(uri, "UTF-8");
-			writer.append(java.nio.CharBuffer.wrap(this.request.getBody()));
-			writer.close();
-			
 			// File does not exist so lets create 404 file not found code
-			response = HttpResponseFactory.createRequestWithFile(file,Protocol.CLOSE);
+			response = HttpResponseFactory.createRequest("404",Protocol.CLOSE);
 		}
+		
 		return response;
 	}
 

@@ -39,15 +39,15 @@ import java.util.Scanner;
 
 import server.Server;
 
-public class PostRequest extends AbstractRequest {
+public class PutRequest extends AbstractRequest {
 
-	public PostRequest() {}
+	public PutRequest() {}
 
-	public PostRequest(Server server) {
+	public PutRequest(Server server) {
 		this.server = server;
 	}
 
-	public PostRequest(HttpRequest request, Server server) {
+	public PutRequest(HttpRequest request, Server server) {
 		this.request = request;
 		this.server = server;
 	}
@@ -57,7 +57,7 @@ public class PostRequest extends AbstractRequest {
 	 */
 	@Override
 	public HttpResponse execute() throws Exception {
-		// Handling POST request here
+		// Handling PUT request here
 		// Get relative URI path from request
 		String uri = request.getUri();
 		// Get root directory path from server
@@ -86,8 +86,8 @@ public class PostRequest extends AbstractRequest {
 			}
 			else { // Its a file
 				//Files.write(Paths.get(rootDirectory + uri), new String(this.request.getBody()).getBytes(), StandardOpenOption.APPEND);
-				BufferedWriter bw = new BufferedWriter(new FileWriter(file,true));
-				bw.write(new String(this.request.getBody()));
+				BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+			    bw.write(new String(this.request.getBody()));
 			    bw.flush();
 			    bw.close();
 				// Lets create 200 OK response

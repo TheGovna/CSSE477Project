@@ -28,6 +28,7 @@ import java.net.Socket;
 import java.util.HashMap;
 
 import protocol.AbstractRequest;
+import protocol.DeleteRequest;
 import protocol.GetRequest;
 import protocol.HttpRequest;
 import protocol.HttpResponse;
@@ -35,6 +36,7 @@ import protocol.HttpResponseFactory;
 import protocol.PostRequest;
 import protocol.Protocol;
 import protocol.ProtocolException;
+import protocol.PutRequest;
 
 /**
  * This class is responsible for handling a incoming request
@@ -52,8 +54,11 @@ public class ConnectionHandler implements Runnable {
 	public ConnectionHandler(Server server, Socket socket) {
 		this.server = server;
 		this.socket = socket;
+		this.map = new HashMap<String, AbstractRequest>();
 		this.map.put(Protocol.GET, new GetRequest(this.server));
 		this.map.put(Protocol.POST, new PostRequest(this.server));
+		this.map.put(Protocol.PUT, new PutRequest(this.server));
+		this.map.put(Protocol.DELETE, new DeleteRequest(this.server));
 	}
 	
 	/**
@@ -108,16 +113,14 @@ public class ConnectionHandler implements Runnable {
 			// Protocol.BAD_REQUEST_CODE and Protocol.NOT_SUPPORTED_CODE
 			int status = pe.getStatus();
 			if(status == Protocol.BAD_REQUEST_CODE) {
-//				response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
-				response = HttpResponseFactory.create400BadRequest(Protocol.CLOSE);
+				response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
 			}
 			// TODO: Handle version not supported code as well
 		}
 		catch(Exception e) {
 			e.printStackTrace();
 			// For any other error, we will create bad request response as well
-//			response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
-			response = HttpResponseFactory.create400BadRequest(Protocol.CLOSE);
+			response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
 		}
 		
 		if(response != null) {
@@ -152,14 +155,15 @@ public class ConnectionHandler implements Runnable {
 			
 			AbstractRequest req = map.get(request.getMethod());
 			req.setRequest(request);
+			req.setResponse(response);
 			System.out.println(req);
-			req.execute();
+			response = req.execute();
 			
 			/*else if(request.getMethod().equalsIgnoreCase(Protocol.GET)) {
 //				Map<String, String> header = request.getHeader();
 //				String date = header.get("if-modified-since");
 //				String hostName = header.get("host");
-//				
+				
 				// Handling GET request here
 				// Get relative URI path from request
 				String uri = request.getUri();
@@ -175,21 +179,21 @@ public class ConnectionHandler implements Runnable {
 						file = new File(location);
 						if(file.exists()) {
 							// Lets create 200 OK response
-							response = HttpResponseFactory.create200OK(file, Protocol.CLOSE);
+							response = HttpResponseFactory.createRequest(file, Protocol.CLOSE);
 						}
 						else {
 							// File does not exist so lets create 404 file not found code
-							response = HttpResponseFactory.create404NotFound(Protocol.CLOSE);
+							response = HttpResponseFactory.createRequest("404",Protocol.CLOSE);
 						}
 					}
 					else { // Its a file
 						// Lets create 200 OK response
-						response = HttpResponseFactory.create200OK(file, Protocol.CLOSE);
+						response = HttpResponseFactory.createRequest(file, Protocol.CLOSE);
 					}
 				}
 				else {
 					// File does not exist so lets create 404 file not found code
-					response = HttpResponseFactory.create404NotFound(Protocol.CLOSE);
+					response = HttpResponseFactory.createRequest("404",Protocol.CLOSE);
 				}
 			}*/
 		}
@@ -202,8 +206,7 @@ public class ConnectionHandler implements Runnable {
 		// So this is a temporary patch for that problem and should be removed
 		// after a response object is created for protocol version mismatch.
 		if(response == null) {
-//			response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
-			response = HttpResponseFactory.create400BadRequest(Protocol.CLOSE);
+			response = HttpResponseFactory.createRequest("400",Protocol.CLOSE);
 		}
 		
 		try{
