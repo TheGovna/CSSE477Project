@@ -73,11 +73,9 @@ public class WatchDir implements Runnable {
 		this.keys = new HashMap<WatchKey, Path>();
 		this.recursive = false;
 		String workDir = System.getProperty("user.dir");
-		System.out.println(workDir);
-		Path dir = Paths.get(workDir + "\\src\\plugins");
+		Path dir = Paths.get(workDir + "\\src\\plugins\\activePlugins");
 		String path = Paths.get(workDir).toString()
 		+ "\\src\\plugins\\activePlugins";
-		System.out.println(path);
 		File[] files = new File(path).listFiles();
 		// If this pathname does not denote a directory, then listFiles()
 		// returns null.
@@ -87,6 +85,9 @@ public class WatchDir implements Runnable {
 						file.getName().toString().lastIndexOf('.'));
 				this.plugins.put(plgin, new IPlugin(file));
 			}
+		}
+		for(String localKey: this.plugins.keySet()){
+			System.out.println("Initilization "+localKey);
 		}
 		if (recursive) {
 			registerAll(dir);
