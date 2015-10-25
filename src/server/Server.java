@@ -26,6 +26,10 @@ import gui.WebServer;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+
+import plugins.IPlugin;
+import plugins.WatchDir;
 
 /**
  * This represents a welcoming server for the incoming
@@ -38,6 +42,7 @@ public class Server implements Runnable {
 	private int port;
 	private boolean stop;
 	private ServerSocket welcomeSocket;
+	private WatchDir wd;
 	
 	private long connections;
 	private long serviceTime;
@@ -116,6 +121,10 @@ public class Server implements Runnable {
 	 */
 	public void run() {
 		try {
+			this.wd = new WatchDir();
+			Thread t = new Thread(wd);
+			t.start();
+			
 			this.welcomeSocket = new ServerSocket(port);
 			
 			// Now keep welcoming new connections until stop flag is set to true
@@ -167,5 +176,12 @@ public class Server implements Runnable {
 		if(this.welcomeSocket != null)
 			return this.welcomeSocket.isClosed();
 		return true;
+	}
+
+	/**
+	 * @return map of plugins
+	 */
+	public HashMap<String, IPlugin> getPlugins() {
+		return wd.getPlugins();
 	}
 }

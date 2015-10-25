@@ -68,7 +68,7 @@ public class WatchDir implements Runnable {
 		});
 	}
 
-	public WatchDir() throws IOException {
+	public WatchDir() throws Exception {
 		this.watcher = FileSystems.getDefault().newWatchService();
 		this.keys = new HashMap<WatchKey, Path>();
 		this.recursive = false;
@@ -102,7 +102,7 @@ public class WatchDir implements Runnable {
 	/**
 	 * Process all events for keys queued to the watcher
 	 */
-	void processEvents() {
+	void processEvents() throws Exception {
 		for (;;) {
 
 			// wait for key to be signalled
@@ -171,7 +171,18 @@ public class WatchDir implements Runnable {
 	}
 
 	public void run() {
-		processEvents();
+		try {
+			processEvents();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * @return map of plugins
+	 */
+	public HashMap<String, IPlugin> getPlugins() {
+		return this.plugins;
 	}
 
 }

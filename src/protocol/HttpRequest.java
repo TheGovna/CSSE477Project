@@ -55,6 +55,26 @@ public class HttpRequest {
 	public String getMethod() {
 		return method;
 	}
+	
+	public void setMethod(String method){
+		this.method = method;
+	}
+	
+	public void appendBody(String body) {
+		char[] result = new char[this.body.length + body.length() + 1];
+		
+		for (int i = 0; i < result.length; i++) {
+			if (i < this.body.length) {
+				result[i] = this.body[i];
+			} else if (i == this.body.length) {
+				result[i] = '\n';
+			} else {
+				result[i] = body.charAt(i - this.body.length - 1);
+			}
+		}
+		
+		this.body = result;
+	}
 
 	/**
 	 * The URI of the request object.
@@ -63,6 +83,10 @@ public class HttpRequest {
 	 */
 	public String getUri() {
 		return uri;
+	}
+	
+	public void setUri(String URI){
+		this.uri = URI;
 	}
 
 	/**

@@ -4,7 +4,7 @@ import java.io.IOException;
 
 public class WDTest {
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		try {
 			WatchDir wd = new WatchDir();
 			Thread t = new Thread(wd);

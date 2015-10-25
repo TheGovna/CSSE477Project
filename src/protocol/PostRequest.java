@@ -95,12 +95,12 @@ public class PostRequest extends AbstractRequest {
 			}
 		}
 		else {
-			PrintWriter writer = new PrintWriter(uri, "UTF-8");
-			writer.append(java.nio.CharBuffer.wrap(this.request.getBody()));
-			writer.close();
-			
-			// File does not exist so lets create 404 file not found code
-			response = HttpResponseFactory.createRequestWithFile(file,Protocol.CLOSE);
+			BufferedWriter bw = new BufferedWriter(new FileWriter(file,true));
+			bw.write(new String(this.request.getBody()));
+		    bw.flush();
+		    bw.close();
+			// Lets create 200 OK response
+			response = HttpResponseFactory.createRequestWithFile(file, Protocol.CLOSE);
 		}
 		return response;
 	}

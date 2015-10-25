@@ -41,7 +41,8 @@ import server.Server;
 
 public class PutRequest extends AbstractRequest {
 
-	public PutRequest() {}
+	public PutRequest() {
+	}
 
 	public PutRequest(Server server) {
 		this.server = server;
@@ -52,7 +53,9 @@ public class PutRequest extends AbstractRequest {
 		this.server = server;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see protocol.AbstractRequest#execute()
 	 */
 	@Override
@@ -64,43 +67,49 @@ public class PutRequest extends AbstractRequest {
 		String rootDirectory = server.getRootDirectory();
 		// Combine them together to form absolute file path
 		File file = new File(rootDirectory + uri);
-		
+
 		// Check if the file exists
-		if(file.exists()) {
-			if(file.isDirectory()) {
+		if (file.exists()) {
+			if (file.isDirectory()) {
 				// Look for default index.html file in a directory
-				String location = rootDirectory + uri + System.getProperty("file.separator") + Protocol.DEFAULT_FILE;
+				String location = rootDirectory + uri
+						+ System.getProperty("file.separator")
+						+ Protocol.DEFAULT_FILE;
 				file = new File(location);
 				BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-			    bw.write(new String(this.request.getBody()));
-			    bw.flush();
-			    bw.close();
-				if(file.exists()) {
+				bw.write(new String(this.request.getBody()));
+				bw.flush();
+				bw.close();
+				if (file.exists()) {
 					// Lets create 200 OK response
-					response = HttpResponseFactory.createRequestWithFile(file, Protocol.CLOSE);
+					response = HttpResponseFactory.createRequestWithFile(file,
+							Protocol.CLOSE);
+				} else {
+					// File does not exist so lets create 404 file not found
+					// code
+					response = HttpResponseFactory.createRequest("404",
+							Protocol.CLOSE);
 				}
-				else {
-					// File does not exist so lets create 404 file not found code
-					response = HttpResponseFactory.createRequest("404",Protocol.CLOSE);
-				}
-			}
-			else { // Its a file
-				//Files.write(Paths.get(rootDirectory + uri), new String(this.request.getBody()).getBytes(), StandardOpenOption.APPEND);
+			} else { // Its a file
+						// Files.write(Paths.get(rootDirectory + uri), new
+						// String(this.request.getBody()).getBytes(),
+						// StandardOpenOption.APPEND);
 				BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-			    bw.write(new String(this.request.getBody()));
-			    bw.flush();
-			    bw.close();
+				bw.write(new String(this.request.getBody()));
+				bw.flush();
+				bw.close();
 				// Lets create 200 OK response
-				response = HttpResponseFactory.createRequestWithFile(file, Protocol.CLOSE);
+				response = HttpResponseFactory.createRequestWithFile(file,
+						Protocol.CLOSE);
 			}
-		}
-		else {
-			PrintWriter writer = new PrintWriter(uri, "UTF-8");
-			writer.append(java.nio.CharBuffer.wrap(this.request.getBody()));
-			writer.close();
-			
+		} else {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+			bw.write(new String(this.request.getBody()));
+			bw.flush();
+			bw.close();
 			// File does not exist so lets create 404 file not found code
-			response = HttpResponseFactory.createRequestWithFile(file,Protocol.CLOSE);
+			response = HttpResponseFactory.createRequestWithFile(file,
+					Protocol.CLOSE);
 		}
 		return response;
 	}
