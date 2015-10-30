@@ -110,6 +110,7 @@ public class ConnectionHandler implements Runnable {
 			// Parse the request
 			String[] uri = request.getUri().split("/");
 			if (uri.length == 3) {
+				String requestTypeString = uri[0];
 				String pluginString = uri[1];
 				String servletString = uri[2];
 				
@@ -128,7 +129,21 @@ public class ConnectionHandler implements Runnable {
 							"This servlet doesn't exist");
 				}
 				
-				servlet.genRequest(request);
+				switch (requestTypeString) {
+				case Protocol.GET:
+					servlet.doGet(request, response);
+					break;
+				case Protocol.POST:
+					servlet.doPost(request, response);
+					break;
+				case Protocol.PUT:
+					servlet.doPut(request, response);
+					break;
+				case Protocol.DELETE:
+					servlet.doDelete(request, response);
+					break;
+				}
+
 			}else{
 				for(String s: uri){
 					System.out.println(s);

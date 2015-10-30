@@ -4,12 +4,14 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Scanner;
 
-public class IPlugin {
+public abstract class IPlugin {
 	
 	HashMap<String, IServlet> servlets = new HashMap<String, IServlet>();
 
-	public IPlugin(File file) throws Exception {
-		Scanner sc = new Scanner(file);
+	public IPlugin(File configFile) throws Exception {
+		//System.out.println(configFile);
+		System.out.println(configFile.toPath().toString());
+		Scanner sc = new Scanner(configFile);
 		
 		while (sc.hasNext()) {
 			try{
@@ -19,7 +21,8 @@ public class IPlugin {
 			String servletName = line[1];
 			String uri = line[2];
 			
-			IServlet servlet = new IServlet(line);
+			
+			IServlet servlet = this.generateServlet(line);
 			
 			if (!this.servlets.containsKey(uri)) {
 				this.servlets.put(uri, servlet);
@@ -33,6 +36,8 @@ public class IPlugin {
 			
 		}
 	}
+	
+	public abstract IServlet generateServlet(String[] servlets);
 	
 	public IServlet getServlet(String servlet) {
 		return this.servlets.get(servlet);

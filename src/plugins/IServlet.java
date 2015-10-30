@@ -28,34 +28,18 @@
  
 package plugins;
 
+import java.util.Map;
+
 import protocol.HttpRequest;
+import protocol.HttpResponse;
 
-public class IServlet {
-	String servletName;
-	String requestType;
-	String body;
+public abstract class IServlet {
+	protected String responseString;
+	protected Map<String, String> map;
 	
-	public IServlet(String[] line) {
-		this.servletName = line[1];
-		this.requestType = line[0];
-		
-		if (line.length == 4) {
-			this.body = line[3];
-		}
-
-	}
-
-	/**
-	 * @param request 
-	 * 
-	 */
-	public void genRequest(HttpRequest request) {
-		request.setMethod(this.requestType);
-		request.setUri("/"+this.servletName);
-		
-		if (body != null) {
-			request.appendBody(this.body);
-		}
-
-	}
+	public abstract void processRequest(HttpRequest request, HttpResponse response);
+	public abstract void doGet(HttpRequest request, HttpResponse response);
+	public abstract void doPost(HttpRequest request, HttpResponse response);
+	public abstract void doPut(HttpRequest request, HttpResponse response);
+	public abstract void doDelete(HttpRequest request, HttpResponse response);
 }

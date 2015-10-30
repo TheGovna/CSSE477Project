@@ -1,0 +1,5 @@
+GET|MyGet|GettingThere
+GET|index.html|Getter
+DELETE|index.html|Deleter
+POST|index.html|Poster|some text!!!
+PUT|index.html|Putter|some more text!!!

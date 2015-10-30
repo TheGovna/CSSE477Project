@@ -8,6 +8,11 @@ import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -21,6 +26,8 @@ import java.nio.file.WatchEvent.Kind;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class WatchDir implements Runnable {
 
@@ -83,7 +90,10 @@ public class WatchDir implements Runnable {
 			if (file.isFile()) {
 				String plgin = file.getName().substring(0,
 						file.getName().toString().lastIndexOf('.'));
-				this.plugins.put(plgin, new IPlugin(file));
+				IPlugin p = loadPlugin(plgin); // assume jar name = plugin name
+//				Class<?> clazz = Class.forName(plgin);
+//				IPlugin p = (IPlugin) clazz.getConstructor().newInstance(file);
+				this.plugins.put(plgin, p);
 			}
 		}
 		for(String localKey: this.plugins.keySet()){
@@ -129,13 +139,17 @@ public class WatchDir implements Runnable {
 
 				// Context for directory entry event is the file name of entry
 				WatchEvent<Path> ev = cast(event);
+//				System.out.println(ev.toString());
 				Path name = ev.context();
+//				System.out.println(name.toString());
 				Path child = dir.resolve(name);
+//				System.out.println(child);
 
 				if (kind == ENTRY_CREATE) {
 					String plgin = name.toString().substring(0,
 							name.toString().lastIndexOf('.'));
-					this.plugins.put(plgin ,new IPlugin(name.toFile()));
+					IPlugin p = loadPlugin(plgin); // assume jar name = plugin name
+					this.plugins.put(plgin, p);
 				} else if (kind == ENTRY_DELETE) {
 					String plgin = name.toString().substring(0,
 							name.toString().lastIndexOf('.'));
@@ -176,6 +190,33 @@ public class WatchDir implements Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public IPlugin loadPlugin(String jarName) throws Exception {
+		String jarUrl = "file:src\\plugins\\activePlugins\\" + jarName+".jar";
+		URL classUrl = new URL(jarUrl);
+		URL[] classUrls = { classUrl };
+		URLClassLoader urlClassLoader = new URLClassLoader(classUrls);
+		Class<?> beanClass = urlClassLoader.loadClass(jarName + ".PluginCreator");
+		
+		// Create a new instance from the loaded class
+		Constructor<?> constructor = beanClass.getConstructor();
+		Object beanObj = constructor.newInstance();
+		Method method = beanClass.getMethod("createPlugin", File.class);
+		
+		// NOTE: This URL is wrong because we want the path from the plugin project
+		String pluginFileUrl = "src\\" + jarName + ".txt";
+		InputStream is = getClass().getResourceAsStream(jarName + ".txt");
+		byte[] buffer = new byte[is.available()];
+		is.read(buffer);
+		File targetFile = new File("src/plugins/" + jarName + ".txt");
+		
+		System.out.println("pluginFileUrl: " + pluginFileUrl);
+		System.out.println("----------");
+		File f = new File(pluginFileUrl);
+		
+		IPlugin ip = (IPlugin) method.invoke(beanObj, f);
+		return ip;
 	}
 
 	/**
