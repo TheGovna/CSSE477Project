@@ -37,9 +37,9 @@ public abstract class IServlet {
 	protected String responseString;
 	protected Map<String, String> map;
 	
-	public abstract void processRequest(HttpRequest request, HttpResponse response);
-	public abstract void doGet(HttpRequest request, HttpResponse response);
-	public abstract void doPost(HttpRequest request, HttpResponse response);
-	public abstract void doPut(HttpRequest request, HttpResponse response);
-	public abstract void doDelete(HttpRequest request, HttpResponse response);
+	public abstract HttpResponse processRequest(HttpRequest request, HttpResponse response);
+	public abstract HttpResponse doGet(HttpRequest request, HttpResponse response);
+	public abstract HttpResponse doPost(HttpRequest request, HttpResponse response);
+	public abstract HttpResponse doPut(HttpRequest request, HttpResponse response);
+	public abstract HttpResponse doDelete(HttpRequest request, HttpResponse response);
 }

@@ -6,9 +6,11 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -156,7 +158,7 @@ public class WatchDir implements Runnable {
 					this.plugins.remove(plgin);
 				}
 				for(String localKey: this.plugins.keySet()){
-					System.out.println(localKey);
+					//System.out.println(localKey);
 				}
 				// if directory is created, and watching recursively, then
 				// register it and its sub-directories
@@ -205,15 +207,24 @@ public class WatchDir implements Runnable {
 		Method method = beanClass.getMethod("createPlugin", File.class);
 		
 		// NOTE: This URL is wrong because we want the path from the plugin project
-		String pluginFileUrl = "src\\" + jarName + ".txt";
-		InputStream is = getClass().getResourceAsStream(jarName + ".txt");
+		String pluginFileUrl = jarName + ".txt";
+		InputStream is = getClass().getResourceAsStream(pluginFileUrl);
+		System.out.println("is: " + is);
 		byte[] buffer = new byte[is.available()];
 		is.read(buffer);
-		File targetFile = new File("src/plugins/" + jarName + ".txt");
 		
-		System.out.println("pluginFileUrl: " + pluginFileUrl);
-		System.out.println("----------");
-		File f = new File(pluginFileUrl);
+		InputStreamReader isr = new InputStreamReader(is);
+		BufferedReader br = new BufferedReader(isr);
+		
+		String line;
+		System.out.println("Printing buffered reader:");
+		while ((line = br.readLine()) != null) {
+			System.out.println(line);
+		}
+		
+		File f = new File("src\\plugins\\" + jarName + ".txt");
+
+		//File f = new File(targetFile);
 		
 		IPlugin ip = (IPlugin) method.invoke(beanObj, f);
 		return ip;

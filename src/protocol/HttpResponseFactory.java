@@ -22,6 +22,7 @@
 package protocol;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.net.FileNameMap;
 import java.net.URLConnection;
 import java.util.Calendar;
@@ -38,6 +39,7 @@ public class HttpResponseFactory {
 	private static HashMap<String, String[]> requestStrings = new HashMap<String, String[]>();
 
 	public static HttpResponse createRequest(String type, String connection) {
+		//THIS IS BROKEN
 		if (requestStrings.isEmpty()) {
 			String[] codes = { Protocol.BAD_REQUEST_CODE + "",
 					Protocol.BAD_REQUEST_TEXT };

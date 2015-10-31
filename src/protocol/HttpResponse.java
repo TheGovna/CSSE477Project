@@ -26,6 +26,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.Map;
 
@@ -40,6 +41,7 @@ public class HttpResponse {
 	private String phrase;
 	private Map<String, String> header;
 	private File file;
+	
 
 	
 	/**
@@ -187,5 +189,6 @@ public class HttpResponse {
 		buffer.append("\n----------------------------------\n");
 		return buffer.toString();
 	}
+
 	
 }

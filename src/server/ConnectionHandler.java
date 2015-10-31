@@ -22,6 +22,7 @@
 package server;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -109,10 +110,10 @@ public class ConnectionHandler implements Runnable {
 
 			// Parse the request
 			String[] uri = request.getUri().split("/");
-			if (uri.length == 3) {
-				String requestTypeString = uri[0];
-				String pluginString = uri[1];
-				String servletString = uri[2];
+			if (uri.length == 2) {
+				String requestTypeString = request.getMethod();
+				String pluginString = uri[0];
+				String servletString = uri[1];
 				
 				HashMap<String, IPlugin> plugins = this.server.getPlugins();
 				IPlugin currPlugin = plugins.get(pluginString);
@@ -128,19 +129,19 @@ public class ConnectionHandler implements Runnable {
 					throw new ProtocolException(Protocol.NOT_FOUND_CODE,
 							"This servlet doesn't exist");
 				}
-				
+				System.out.println(requestTypeString);
 				switch (requestTypeString) {
 				case Protocol.GET:
-					servlet.doGet(request, response);
+					response = servlet.doGet(request, response);
 					break;
 				case Protocol.POST:
-					servlet.doPost(request, response);
+					response = servlet.doPost(request, response);
 					break;
 				case Protocol.PUT:
-					servlet.doPut(request, response);
+					response = servlet.doPut(request, response);
 					break;
 				case Protocol.DELETE:
-					servlet.doDelete(request, response);
+					response = servlet.doDelete(request, response);
 					break;
 				}
 
@@ -174,7 +175,7 @@ public class ConnectionHandler implements Runnable {
 			// Means there was an error, now write the response object to the
 			// socket
 			try {
-				response.write(outStream);
+				response.write(socket.getOutputStream());
 				// System.out.println(response);
 			} catch (Exception e) {
 				// We will ignore this exception
@@ -248,7 +249,7 @@ public class ConnectionHandler implements Runnable {
 
 		try {
 			// Write response and we are all done so close the socket
-			response.write(outStream);
+			response.write(socket.getOutputStream());
 			// System.out.println(response);
 			socket.close();
 		} catch (Exception e) {
