@@ -91,6 +91,13 @@ public class Protocol {
     public static final String DEFAULT_FILE = "index.html";
     public static final String MIME_TEXT = "text";
     
+    // Supported File Types
+    public static final String JPG = "JPG";
+    public static final String PDF = "PDF";
+    public static final String TXT = "TXT";
+    public static final String HTML = "HTML";
+    public static final String UNSUPPORTED_TYPE = "OTHER";
+    
     /**
      * Returns a formatted String containing server information.<br/>
      * e.g. <tt>SimpleWebServer(SWS)/1.0.0 (Mac OS X/10.5.8/i386)</tt>

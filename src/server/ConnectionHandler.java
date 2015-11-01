@@ -26,7 +26,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 import plugins.IPlugin;
 import plugins.IServlet;
@@ -53,6 +57,8 @@ public class ConnectionHandler implements Runnable {
 	private Server server;
 	private Socket socket;
 	private HashMap<String, AbstractRequest> map;
+	
+	private long timer;
 
 	public ConnectionHandler(Server server, Socket socket) {
 		this.server = server;
@@ -62,6 +68,9 @@ public class ConnectionHandler implements Runnable {
 		this.map.put(Protocol.POST, new PostRequest(this.server));
 		this.map.put(Protocol.PUT, new PutRequest(this.server));
 		this.map.put(Protocol.DELETE, new DeleteRequest(this.server));
+		
+		// performance testing
+		this.timer = System.currentTimeMillis();
 	}
 
 	/**
@@ -80,7 +89,7 @@ public class ConnectionHandler implements Runnable {
 	public void run() {
 		// Get the start time
 		long start = System.currentTimeMillis();
-
+		
 		InputStream inStream = null;
 		OutputStream outStream = null;
 
@@ -110,7 +119,7 @@ public class ConnectionHandler implements Runnable {
 
 			// Parse the request
 			String[] uri = request.getUri().split("/");
-			if (uri.length == 2) {
+			if (uri.length == 2 && !uri[0].equals("")) {
 				String requestTypeString = request.getMethod();
 				String pluginString = uri[0];
 				String servletString = uri[1];
@@ -262,5 +271,7 @@ public class ConnectionHandler implements Runnable {
 		// Get the end time
 		long end = System.currentTimeMillis();
 		this.server.incrementServiceTime(end - start);
+		
+		System.out.println("Time taken to serve this request: " + (System.currentTimeMillis() - timer));
 	}
 }

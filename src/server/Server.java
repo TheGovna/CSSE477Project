@@ -26,10 +26,20 @@ import gui.WebServer;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import plugins.IPlugin;
 import plugins.WatchDir;
+import protocol.HttpRequest;
+import protocol.Protocol;
 
 /**
  * This represents a welcoming server for the incoming
@@ -48,6 +58,9 @@ public class Server implements Runnable {
 	private long serviceTime;
 	
 	private WebServer window;
+	
+	private List<Thread> handlers;
+	private Map<String, List<Queue<HttpRequest>>> requestMap;
 	/**
 	 * @param rootDirectory
 	 * @param port
@@ -59,6 +72,15 @@ public class Server implements Runnable {
 		this.connections = 0;
 		this.serviceTime = 0;
 		this.window = window;
+		
+		// performance improvement - queue
+		this.handlers = new ArrayList<Thread>();
+		this.requestMap = new HashMap<String, List<Queue<HttpRequest>>>();
+		this.requestMap.put(Protocol.TXT, new ArrayList<Queue<HttpRequest>>());
+		this.requestMap.put(Protocol.JPG, new ArrayList<Queue<HttpRequest>>());
+		this.requestMap.put(Protocol.PDF, new ArrayList<Queue<HttpRequest>>());
+		this.requestMap.put(Protocol.HTML, new ArrayList<Queue<HttpRequest>>());
+		this.requestMap.put(Protocol.UNSUPPORTED_TYPE, new ArrayList<Queue<HttpRequest>>());
 	}
 
 	/**
@@ -127,6 +149,9 @@ public class Server implements Runnable {
 			
 			this.welcomeSocket = new ServerSocket(port);
 			
+			int counter = 0;
+			long timer = System.currentTimeMillis();
+			
 			// Now keep welcoming new connections until stop flag is set to true
 			while(true) {
 				// Listen for incoming socket connection
@@ -139,7 +164,18 @@ public class Server implements Runnable {
 				
 				// Create a handler for this incoming connection and start the handler in a new thread
 				ConnectionHandler handler = new ConnectionHandler(this, connectionSocket);
-				new Thread(handler).start();
+				
+				Thread thread = new Thread(handler);
+				this.handlers.add(thread);
+				thread.start();
+				
+				counter++;
+				
+				if (System.currentTimeMillis() - timer > 1000) {
+					System.out.println("Number of things served: " + counter);
+					timer = System.currentTimeMillis();
+					counter = 0;
+				}
 			}
 			this.welcomeSocket.close();
 		}
@@ -169,7 +205,7 @@ public class Server implements Runnable {
 	}
 	
 	/**
-	 * Checks if the server is stopeed or not.
+	 * Checks if the server is stopped or not.
 	 * @return
 	 */
 	public boolean isStoped() {
