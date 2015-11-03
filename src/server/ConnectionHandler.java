@@ -26,12 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Queue;
 
 import plugins.IPlugin;
 import plugins.IServlet;
@@ -57,25 +52,19 @@ import protocol.PutRequest;
 public class ConnectionHandler implements Runnable {
 	private Server server;
 	private Socket socket;
-	private HashMap<String, AbstractRequest> map;
 	
-	private long timer;
-	private int requestCounter;
 	private long requestTimer;
+	private HashMap<String, AbstractRequest> map;
 
 	public ConnectionHandler(Server server, Socket socket) {
 		this.server = server;
 		this.socket = socket;
+		
 		this.map = new HashMap<String, AbstractRequest>();
 		this.map.put(Protocol.GET, new GetRequest(this.server));
 		this.map.put(Protocol.POST, new PostRequest(this.server));
 		this.map.put(Protocol.PUT, new PutRequest(this.server));
 		this.map.put(Protocol.DELETE, new DeleteRequest(this.server));
-		
-		// performance testing
-		this.timer = System.currentTimeMillis();
-		this.requestCounter = 0;
-		this.requestTimer = System.currentTimeMillis();
 	}
 
 	/**
@@ -94,7 +83,7 @@ public class ConnectionHandler implements Runnable {
 	public void run() {
 		// Get the start time
 		long start = System.currentTimeMillis();
-		
+
 		InputStream inStream = null;
 		OutputStream outStream = null;
 
@@ -121,7 +110,7 @@ public class ConnectionHandler implements Runnable {
 		HttpResponse response = null;
 		try {
 			request = HttpRequest.read(inStream);
-			this.requestCounter++;
+			this.requestTimer = System.currentTimeMillis();
 
 			// Parse the request
 			String[] uri = request.getUri().split("/");
@@ -265,7 +254,7 @@ public class ConnectionHandler implements Runnable {
 		try {
 			// Write response and we are all done so close the socket
 			response.write(socket.getOutputStream());
-			// System.out.println(response);
+			System.out.println("It took " + (System.currentTimeMillis()-this.requestTimer) + " milliseconds to serve this request.");
 			socket.close();
 		} catch (Exception e) {
 			// We will ignore this exception
@@ -277,13 +266,5 @@ public class ConnectionHandler implements Runnable {
 		// Get the end time
 		long end = System.currentTimeMillis();
 		this.server.incrementServiceTime(end - start);
-		
-		if ((System.currentTimeMillis() - this.requestTimer) >= 1000) {
-			if (this.requestCounter >= 50) {
-				
-			}
-		}
-		
-		System.out.println("Time taken to serve this request: " + (System.currentTimeMillis() - timer));
 	}
 }

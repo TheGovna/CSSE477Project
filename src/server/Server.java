@@ -26,12 +26,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
 
 import gui.WebServer;
 import plugins.IPlugin;
@@ -55,14 +50,10 @@ public class Server implements Runnable {
 
 	private WebServer window;
 
-	private Map<String, Queue<Thread>> requestMap;
-	private Map<String, Integer> clientRequests;
-	private List<String> bannedClients;
-	private List<String> requesters;
-	private List<String> tempRequesters;
-	private Iterator<String> requestersItr;
-	
 	private String host;
+	private HashMap<String, Integer> clientRequests;
+	private ArrayList<String> bannedClients;
+	private int counter;
 
 	/**
 	 * @param rootDirectory
@@ -76,14 +67,11 @@ public class Server implements Runnable {
 		this.connections = 0;
 		this.serviceTime = 0;
 		this.window = window;
+		this.counter = 0;
 
 		// performance improvement - queue
-		this.requestMap = new HashMap<String, Queue<Thread>>();
 		this.clientRequests = new HashMap<String, Integer>();
 		this.bannedClients = new ArrayList<String>();
-		this.requesters = new LinkedList<String>();
-		this.tempRequesters = new LinkedList<String>();
-		this.requestersItr = this.requesters.iterator();
 	}
 
 	/**
@@ -148,14 +136,10 @@ public class Server implements Runnable {
 			this.wd = new WatchDir();
 			Thread t = new Thread(wd);
 			t.start();
-			
-			Thread t2 = new Thread(new RequestHandler(this));
-			t2.start();
-			
+
 			InetAddress host = InetAddress.getByName(this.host);
 			this.welcomeSocket = new ServerSocket(port, 5, host);
 
-			int counter = 0;
 			long timer = System.currentTimeMillis();
 
 			// Now keep welcoming new connections until stop flag is set to true
@@ -163,7 +147,7 @@ public class Server implements Runnable {
 				// Listen for incoming socket connection
 				// This method block until somebody makes a request
 				Socket connectionSocket = this.welcomeSocket.accept();
-				
+
 				// Come out of the loop if the stop flag is set
 				if (this.stop)
 					break;
@@ -176,44 +160,37 @@ public class Server implements Runnable {
 					ConnectionHandler handler = new ConnectionHandler(this, connectionSocket);
 
 					Thread thread = new Thread(handler);
-//					thread.start();
 
 					counter++;
-					
-					//This is a queue of requests for each client
-					if (this.requestMap.containsKey(key)) {
-						Queue<Thread> q = this.requestMap.get(key);
-						q.add(thread);
-						this.requestMap.put(key, q);
-					} else {
-						this.tempRequesters.add(key);
-						Queue<Thread> q = new LinkedList<Thread>();
-						q.add(thread);
-						this.requestMap.put(key, q);
-					}
 
-					//This is the number of requests the client has made
+					// This is the number of requests the client has made
 					if (this.clientRequests.containsKey(key)) {
 						int count = this.clientRequests.get(key);
 						this.clientRequests.put(key, count + 1);
 					} else {
 						this.clientRequests.put(key, 1);
 					}
+					
+
+					// start the handler in a new thread
+					thread.start();
 
 				}
 				if (System.currentTimeMillis() - timer > 1000) {
 					System.out.println("Number of things served: " + counter);
 					timer = System.currentTimeMillis();
 					counter = 0;
-					System.out.println("The number of banned clients is "+this.bannedClients.size());
+					System.out.println("The number of banned clients is " + this.bannedClients.size());
 					for (Entry<String, Integer> e : this.clientRequests.entrySet()) {
 						if (e.getValue() > 50) {
 							this.bannedClients.add(e.getKey());
-							System.out.println(e.getKey() +" is now banned!");
+							System.out.println(e.getKey() + " is now banned!");
 						}
 						this.clientRequests.put(e.getKey(), 0);
 					}
+
 				}
+
 			}
 			this.welcomeSocket.close();
 		} catch (Exception e) {
@@ -262,36 +239,5 @@ public class Server implements Runnable {
 
 	public long getConnections() {
 		return this.connections;
-	}
-
-	public void runNext() {
-		System.out.println("Running next!");
-		String key = null;
-		if(this.requestersItr.hasNext())	
-			key = this.requestersItr.next();
-		else{
-			this.requestersItr = null;
-			if(!this.tempRequesters.isEmpty()) {
-				this.requesters.addAll(this.tempRequesters);
-				this.tempRequesters = new LinkedList<String>();
-			}
-			this.requestersItr = this.requesters.iterator();
-			if (this.requestersItr.hasNext()) {
-				key = this.requestersItr.next();
-			}
-		}
-		if(key != null) {
-			System.out.println("Going to run thread!");
-			Queue<Thread> q = this.requestMap.get(key);
-			Thread t = q.poll();
-			t.start();
-			if(q.isEmpty()){
-				this.requesters.remove(key);
-			}
-		}
-	}
-
-	public int getNumberOfRequesters() {
-		return this.requesters.size() + this.tempRequesters.size();
 	}
 }
