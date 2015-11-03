@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 
 import plugins.IPlugin;
@@ -59,6 +60,8 @@ public class ConnectionHandler implements Runnable {
 	private HashMap<String, AbstractRequest> map;
 	
 	private long timer;
+	private int requestCounter;
+	private long requestTimer;
 
 	public ConnectionHandler(Server server, Socket socket) {
 		this.server = server;
@@ -71,6 +74,8 @@ public class ConnectionHandler implements Runnable {
 		
 		// performance testing
 		this.timer = System.currentTimeMillis();
+		this.requestCounter = 0;
+		this.requestTimer = System.currentTimeMillis();
 	}
 
 	/**
@@ -116,6 +121,7 @@ public class ConnectionHandler implements Runnable {
 		HttpResponse response = null;
 		try {
 			request = HttpRequest.read(inStream);
+			this.requestCounter++;
 
 			// Parse the request
 			String[] uri = request.getUri().split("/");
@@ -271,6 +277,12 @@ public class ConnectionHandler implements Runnable {
 		// Get the end time
 		long end = System.currentTimeMillis();
 		this.server.incrementServiceTime(end - start);
+		
+		if ((System.currentTimeMillis() - this.requestTimer) >= 1000) {
+			if (this.requestCounter >= 50) {
+				
+			}
+		}
 		
 		System.out.println("Time taken to serve this request: " + (System.currentTimeMillis() - timer));
 	}

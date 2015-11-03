@@ -22,6 +22,7 @@
 package gui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -56,6 +57,9 @@ public class WebServer extends JFrame {
 	
 	private Server server;
 	private ServiceRateUpdater rateUpdater;
+
+	private JLabel lblIPAddress;
+	private JTextField txtIPAddress;
 	
 	/**
 	 * For constantly updating the service rate in the GUI.
@@ -96,6 +100,8 @@ public class WebServer extends JFrame {
 
 		// Input panel widgets
 		this.panelInput = new JPanel();
+		this.lblIPAddress = new JLabel("Host");
+		this.txtIPAddress = new JTextField("localhost");
 		this.lblPortNumber = new JLabel("Port Number");
 		this.txtPortNumber = new JTextField("8023");
 		this.lblRootDirectory = new JLabel("Select Root Directory");
@@ -107,6 +113,8 @@ public class WebServer extends JFrame {
 
 		this.panelInput.setBorder(BorderFactory.createTitledBorder("Input Parameters"));
 		this.panelInput.setLayout(new SpringLayout());
+		this.panelInput.add(this.lblIPAddress);
+		this.panelInput.add(this.txtIPAddress);
 		this.panelInput.add(this.lblPortNumber);
 		this.panelInput.add(this.txtPortNumber);
 		this.panelInput.add(this.lblRootDirectory);
@@ -115,7 +123,7 @@ public class WebServer extends JFrame {
 		this.panelInput.add(this.butSelect);
 
 		// Compact the grid
-		SpringUtilities.makeCompactGrid(this.panelInput, 3, 2, 5, 5, 5, 5);
+		SpringUtilities.makeCompactGrid(this.panelInput, 4, 2, 5, 5, 5, 5);
 
 
 		// Run server widgets
@@ -171,6 +179,15 @@ public class WebServer extends JFrame {
 					return;
 				}
 				
+				// Read ip address
+				String host = "localhost";
+				try {
+					host = WebServer.this.txtIPAddress.getText();
+				} catch (Exception ex) {
+					JOptionPane.showMessageDialog(WebServer.this, "Invalid Host!", "Web Server Input Error", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+				
 				// Read port number
 				int port = 23;
 				try {
@@ -185,7 +202,7 @@ public class WebServer extends JFrame {
 				String rootDirectory = WebServer.this.txtRootDirectory.getText();
 				
 				// Now run the server in non-gui thread
-				server = new Server(rootDirectory, port, WebServer.this);
+				server = new Server(rootDirectory, port, host, WebServer.this);
 				rateUpdater = new ServiceRateUpdater();
 				
 				// Disable widgets

@@ -18,32 +18,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/lgpl.html>.
  * 
  */
- 
-package server;
 
-import gui.WebServer;
+package server;
 
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
+import gui.WebServer;
 import plugins.IPlugin;
 import plugins.WatchDir;
-import protocol.HttpRequest;
-import protocol.Protocol;
 
 /**
- * This represents a welcoming server for the incoming
- * TCP request from a HTTP client such as a web browser. 
+ * This represents a welcoming server for the incoming TCP request from a HTTP
+ * client such as a web browser.
  * 
  * @author Chandan R. Rupakheti (rupakhet@rose-hulman.edu)
  */
@@ -53,34 +49,41 @@ public class Server implements Runnable {
 	private boolean stop;
 	private ServerSocket welcomeSocket;
 	private WatchDir wd;
-	
+
 	private long connections;
 	private long serviceTime;
-	
+
 	private WebServer window;
+
+	private Map<String, Queue<Thread>> requestMap;
+	private Map<String, Integer> clientRequests;
+	private List<String> bannedClients;
+	private List<String> requesters;
+	private List<String> tempRequesters;
+	private Iterator<String> requestersItr;
 	
-	private List<Thread> handlers;
-	private Map<String, List<Queue<HttpRequest>>> requestMap;
+	private String host;
+
 	/**
 	 * @param rootDirectory
 	 * @param port
 	 */
-	public Server(String rootDirectory, int port, WebServer window) {
+	public Server(String rootDirectory, int port, String host, WebServer window) {
 		this.rootDirectory = rootDirectory;
 		this.port = port;
+		this.host = host;
 		this.stop = false;
 		this.connections = 0;
 		this.serviceTime = 0;
 		this.window = window;
-		
+
 		// performance improvement - queue
-		this.handlers = new ArrayList<Thread>();
-		this.requestMap = new HashMap<String, List<Queue<HttpRequest>>>();
-		this.requestMap.put(Protocol.TXT, new ArrayList<Queue<HttpRequest>>());
-		this.requestMap.put(Protocol.JPG, new ArrayList<Queue<HttpRequest>>());
-		this.requestMap.put(Protocol.PDF, new ArrayList<Queue<HttpRequest>>());
-		this.requestMap.put(Protocol.HTML, new ArrayList<Queue<HttpRequest>>());
-		this.requestMap.put(Protocol.UNSUPPORTED_TYPE, new ArrayList<Queue<HttpRequest>>());
+		this.requestMap = new HashMap<String, Queue<Thread>>();
+		this.clientRequests = new HashMap<String, Integer>();
+		this.bannedClients = new ArrayList<String>();
+		this.requesters = new LinkedList<String>();
+		this.tempRequesters = new LinkedList<String>();
+		this.requestersItr = this.requesters.iterator();
 	}
 
 	/**
@@ -92,7 +95,6 @@ public class Server implements Runnable {
 		return rootDirectory;
 	}
 
-
 	/**
 	 * Gets the port number for this web server.
 	 * 
@@ -101,34 +103,34 @@ public class Server implements Runnable {
 	public int getPort() {
 		return port;
 	}
-	
+
 	/**
-	 * Returns connections serviced per second. 
-	 * Synchronized to be used in threaded environment.
+	 * Returns connections serviced per second. Synchronized to be used in
+	 * threaded environment.
 	 * 
 	 * @return
 	 */
 	public synchronized double getServiceRate() {
-		if(this.serviceTime == 0)
+		if (this.serviceTime == 0)
 			return Long.MIN_VALUE;
-		double rate = this.connections/(double)this.serviceTime;
+		double rate = this.connections / (double) this.serviceTime;
 		rate = rate * 1000;
 		return rate;
 	}
-	
+
 	/**
-	 * Increments number of connection by the supplied value.
-	 * Synchronized to be used in threaded environment.
+	 * Increments number of connection by the supplied value. Synchronized to be
+	 * used in threaded environment.
 	 * 
 	 * @param value
 	 */
 	public synchronized void incrementConnections(long value) {
 		this.connections += value;
 	}
-	
+
 	/**
-	 * Increments the service time by the supplied value.
-	 * Synchronized to be used in threaded environment.
+	 * Increments the service time by the supplied value. Synchronized to be
+	 * used in threaded environment.
 	 * 
 	 * @param value
 	 */
@@ -137,9 +139,9 @@ public class Server implements Runnable {
 	}
 
 	/**
-	 * The entry method for the main server thread that accepts incoming
-	 * TCP connection request and creates a {@link ConnectionHandler} for
-	 * the request.
+	 * The entry method for the main server thread that accepts incoming TCP
+	 * connection request and creates a {@link ConnectionHandler} for the
+	 * request.
 	 */
 	public void run() {
 		try {
@@ -147,69 +149,106 @@ public class Server implements Runnable {
 			Thread t = new Thread(wd);
 			t.start();
 			
-			this.welcomeSocket = new ServerSocket(port);
+			Thread t2 = new Thread(new RequestHandler(this));
+			t2.start();
 			
+			InetAddress host = InetAddress.getByName(this.host);
+			this.welcomeSocket = new ServerSocket(port, 5, host);
+
 			int counter = 0;
 			long timer = System.currentTimeMillis();
-			
+
 			// Now keep welcoming new connections until stop flag is set to true
-			while(true) {
+			while (true) {
 				// Listen for incoming socket connection
 				// This method block until somebody makes a request
 				Socket connectionSocket = this.welcomeSocket.accept();
 				
 				// Come out of the loop if the stop flag is set
-				if(this.stop)
+				if (this.stop)
 					break;
-				
-				// Create a handler for this incoming connection and start the handler in a new thread
-				ConnectionHandler handler = new ConnectionHandler(this, connectionSocket);
-				
-				Thread thread = new Thread(handler);
-				this.handlers.add(thread);
-				thread.start();
-				
-				counter++;
-				
+
+				String key = "" + connectionSocket.getInetAddress();
+				if (!this.bannedClients.contains(key)) {
+
+					// Create a handler for this incoming connection and start
+					// the handler in a new thread
+					ConnectionHandler handler = new ConnectionHandler(this, connectionSocket);
+
+					Thread thread = new Thread(handler);
+//					thread.start();
+
+					counter++;
+					
+					//This is a queue of requests for each client
+					if (this.requestMap.containsKey(key)) {
+						Queue<Thread> q = this.requestMap.get(key);
+						q.add(thread);
+						this.requestMap.put(key, q);
+					} else {
+						this.tempRequesters.add(key);
+						Queue<Thread> q = new LinkedList<Thread>();
+						q.add(thread);
+						this.requestMap.put(key, q);
+					}
+
+					//This is the number of requests the client has made
+					if (this.clientRequests.containsKey(key)) {
+						int count = this.clientRequests.get(key);
+						this.clientRequests.put(key, count + 1);
+					} else {
+						this.clientRequests.put(key, 1);
+					}
+
+				}
 				if (System.currentTimeMillis() - timer > 1000) {
 					System.out.println("Number of things served: " + counter);
 					timer = System.currentTimeMillis();
 					counter = 0;
+					System.out.println("The number of banned clients is "+this.bannedClients.size());
+					for (Entry<String, Integer> e : this.clientRequests.entrySet()) {
+						if (e.getValue() > 50) {
+							this.bannedClients.add(e.getKey());
+							System.out.println(e.getKey() +" is now banned!");
+						}
+						this.clientRequests.put(e.getKey(), 0);
+					}
 				}
 			}
 			this.welcomeSocket.close();
-		}
-		catch(Exception e) {
+		} catch (Exception e) {
 			window.showSocketException(e);
 		}
 	}
-	
+
 	/**
 	 * Stops the server from listening further.
 	 */
 	public synchronized void stop() {
-		if(this.stop)
+		if (this.stop)
 			return;
-		
+
 		// Set the stop flag to be true
 		this.stop = true;
 		try {
-			// This will force welcomeSocket to come out of the blocked accept() method 
+			// This will force welcomeSocket to come out of the blocked accept()
+			// method
 			// in the main loop of the start() method
 			Socket socket = new Socket(InetAddress.getLocalHost(), port);
-			
+
 			// We do not have any other job for this socket so just close it
 			socket.close();
+		} catch (Exception e) {
 		}
-		catch(Exception e){}
 	}
-	
+
 	/**
 	 * Checks if the server is stopped or not.
+	 * 
 	 * @return
 	 */
 	public boolean isStoped() {
-		if(this.welcomeSocket != null)
+		if (this.welcomeSocket != null)
 			return this.welcomeSocket.isClosed();
 		return true;
 	}
@@ -219,5 +258,40 @@ public class Server implements Runnable {
 	 */
 	public HashMap<String, IPlugin> getPlugins() {
 		return wd.getPlugins();
+	}
+
+	public long getConnections() {
+		return this.connections;
+	}
+
+	public void runNext() {
+		System.out.println("Running next!");
+		String key = null;
+		if(this.requestersItr.hasNext())	
+			key = this.requestersItr.next();
+		else{
+			this.requestersItr = null;
+			if(!this.tempRequesters.isEmpty()) {
+				this.requesters.addAll(this.tempRequesters);
+				this.tempRequesters = new LinkedList<String>();
+			}
+			this.requestersItr = this.requesters.iterator();
+			if (this.requestersItr.hasNext()) {
+				key = this.requestersItr.next();
+			}
+		}
+		if(key != null) {
+			System.out.println("Going to run thread!");
+			Queue<Thread> q = this.requestMap.get(key);
+			Thread t = q.poll();
+			t.start();
+			if(q.isEmpty()){
+				this.requesters.remove(key);
+			}
+		}
+	}
+
+	public int getNumberOfRequesters() {
+		return this.requesters.size() + this.tempRequesters.size();
 	}
 }
