@@ -114,10 +114,10 @@ public class ConnectionHandler implements Runnable {
 
 			// Parse the request
 			String[] uri = request.getUri().split("/");
-			if (uri.length == 2 && !uri[0].equals("")) {
+			if (uri.length == 3) {
 				String requestTypeString = request.getMethod();
-				String pluginString = uri[0];
-				String servletString = uri[1];
+				String pluginString = uri[1];
+				String servletString = uri[2];
 				
 				HashMap<String, IPlugin> plugins = this.server.getPlugins();
 				IPlugin currPlugin = plugins.get(pluginString);
@@ -134,20 +134,21 @@ public class ConnectionHandler implements Runnable {
 							"This servlet doesn't exist");
 				}
 				System.out.println(requestTypeString);
-				switch (requestTypeString) {
-				case Protocol.GET:
-					response = servlet.doGet(request, response);
-					break;
-				case Protocol.POST:
-					response = servlet.doPost(request, response);
-					break;
-				case Protocol.PUT:
-					response = servlet.doPut(request, response);
-					break;
-				case Protocol.DELETE:
-					response = servlet.doDelete(request, response);
-					break;
-				}
+				response = servlet.processRequest(request, response);
+//				switch (requestTypeString) {
+//				case Protocol.GET:
+//					response = servlet.doGet(request, response);
+//					break;
+//				case Protocol.POST:
+//					response = servlet.doPost(request, response);
+//					break;
+//				case Protocol.PUT:
+//					response = servlet.doPut(request, response);
+//					break;
+//				case Protocol.DELETE:
+//					response = servlet.doDelete(request, response);
+//					break;
+//				}
 
 			}else{
 				for(String s: uri){

@@ -18,16 +18,16 @@ public abstract class IPlugin {
 			String[] line = sc.nextLine().split("\\|");
 			
 			String requestType = line[0];
-			String servletName = line[1];
-			String uri = line[2];
-			
-			
+			String uri = line[1];
+						
 			IServlet servlet = this.generateServlet(line);
 			
-			if (!this.servlets.containsKey(uri)) {
-				this.servlets.put(uri, servlet);
+			String key = requestType + ":" + uri;
+			
+			if (!this.servlets.containsKey(key)) {
+				this.servlets.put(key, servlet);
 			} else {
-				throw new Exception("Config file already has this servlet: " + servletName);
+				throw new Exception("Config file already has this mapping for: " + key);
 			}
 			}catch(Exception e){
 				System.out.println("Something went wrong with creating the plugin.");

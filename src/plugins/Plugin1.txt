@@ -1,4 +1,5 @@
-GET|index.html|Getter
-DELETE|index.html|Deleter
-POST|index.html|Poster
-PUT|index.html|Putter
+GET|books
+DELETE|books
+POST|books
+PUT|books
+GET|books/1
