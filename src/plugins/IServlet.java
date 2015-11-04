@@ -34,12 +34,7 @@ import protocol.HttpRequest;
 import protocol.HttpResponse;
 
 public abstract class IServlet {
-	protected String responseString;
 	protected Map<String, String> map;
 	
 	public abstract HttpResponse processRequest(HttpRequest request, HttpResponse response);
-	public abstract HttpResponse doGet(HttpRequest request, HttpResponse response);
-	public abstract HttpResponse doPost(HttpRequest request, HttpResponse response);
-	public abstract HttpResponse doPut(HttpRequest request, HttpResponse response);
-	public abstract HttpResponse doDelete(HttpRequest request, HttpResponse response);
 }

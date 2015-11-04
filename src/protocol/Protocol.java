@@ -28,6 +28,12 @@ package protocol;
  * @author Chandan R. Rupakheti (rupakhet@rose-hulman.edu)
  */
 public class Protocol {
+	// Queue names
+	public static final String GET_QUEUE = "GET_QUEUE";
+	public static final String POST_QUEUE = "POST_QUEUE";
+	public static final String PUT_QUEUE = "PUT_QUEUE";
+	public static final String DELETE_QUEUE = "DELETE_QUEUE";
+	
 	// Escape characters
     public static final char SPACE = ' ';
     public static final char SEPERATOR = ':';
@@ -97,6 +103,7 @@ public class Protocol {
     public static final String TXT = "TXT";
     public static final String HTML = "HTML";
     public static final String UNSUPPORTED_TYPE = "OTHER";
+	public static final String DELIMITER = "//|";
     
     /**
      * Returns a formatted String containing server information.<br/>

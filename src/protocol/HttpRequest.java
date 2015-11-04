@@ -25,6 +25,7 @@ package protocol;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +36,11 @@ import java.util.StringTokenizer;
  * 
  * @author Chandan R. Rupakheti (rupakhet@rose-hulman.edu)
  */
-public class HttpRequest {
+public class HttpRequest implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private String method;
 	private String uri;
 	private String version;
@@ -47,6 +52,22 @@ public class HttpRequest {
 		this.body = new char[0];
 	}
 	
+	/**
+	 * @param method2
+	 * @param uri2
+	 * @param version2
+	 * @param header2
+	 * @param body2
+	 */
+	public HttpRequest(String method, String uri, String version,
+			HashMap<String, String> header, String body) {
+		this.method = method;
+		this.uri = uri;
+		this.version = version;
+		this.header = header;
+		this.body = body.toCharArray();
+	}
+
 	/**
 	 * The request method.
 	 * 
@@ -221,5 +242,28 @@ public class HttpRequest {
 		buffer.append(this.body);
 		buffer.append("----------------------------------\n");
 		return buffer.toString();
+	}
+
+	/**
+	 * @param string
+	 * @return
+	 */
+	public byte[] getBytes() {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(this.method);
+		buffer.append(Protocol.DELIMITER);
+		buffer.append(this.uri);
+		buffer.append(Protocol.DELIMITER);
+		buffer.append(this.version);
+		buffer.append(Protocol.DELIMITER);
+		
+		for(Map.Entry<String, String> entry : this.header.entrySet()) {
+			buffer.append(entry.getKey());
+			buffer.append(Protocol.DELIMITER);
+			buffer.append(entry.getValue());
+			buffer.append(Protocol.DELIMITER);
+		}
+		buffer.append(this.body);
+		return buffer.toString().getBytes();
 	}
 }

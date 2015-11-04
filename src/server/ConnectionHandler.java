@@ -21,8 +21,10 @@
 
 package server;
 
-import java.io.File;
-import java.io.IOException;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -54,17 +56,32 @@ public class ConnectionHandler implements Runnable {
 	private Socket socket;
 	
 	private long requestTimer;
-	private HashMap<String, AbstractRequest> map;
+	private HashMap<String, AbstractRequest> requestMap;
+	
+	ConnectionFactory factory;
+	Connection connection;
+	Channel channel;
 
-	public ConnectionHandler(Server server, Socket socket) {
+	public ConnectionHandler(Server server, Socket socket) throws Exception {
 		this.server = server;
 		this.socket = socket;
 		
-		this.map = new HashMap<String, AbstractRequest>();
-		this.map.put(Protocol.GET, new GetRequest(this.server));
-		this.map.put(Protocol.POST, new PostRequest(this.server));
-		this.map.put(Protocol.PUT, new PutRequest(this.server));
-		this.map.put(Protocol.DELETE, new DeleteRequest(this.server));
+		this.requestMap = new HashMap<String, AbstractRequest>();
+		this.requestMap.put(Protocol.GET, new GetRequest(this.server));
+		this.requestMap.put(Protocol.POST, new PostRequest(this.server));
+		this.requestMap.put(Protocol.PUT, new PutRequest(this.server));
+		this.requestMap.put(Protocol.DELETE, new DeleteRequest(this.server));
+		
+		this.factory = new ConnectionFactory();
+	    this.factory.setHost("localhost");
+	    this.connection = factory.newConnection();
+	    this.channel = connection.createChannel();
+	    
+	    boolean durable = true;
+	    channel.queueDeclare(Protocol.GET_QUEUE, durable, false, false, null);
+	    channel.queueDeclare(Protocol.POST_QUEUE, durable, false, false, null);
+	    channel.queueDeclare(Protocol.PUT_QUEUE, durable, false, false, null);
+	    channel.queueDeclare(Protocol.DELETE_QUEUE, durable, false, false, null);
 	}
 
 	/**
@@ -135,20 +152,6 @@ public class ConnectionHandler implements Runnable {
 				}
 				System.out.println(requestTypeString);
 				response = servlet.processRequest(request, response);
-//				switch (requestTypeString) {
-//				case Protocol.GET:
-//					response = servlet.doGet(request, response);
-//					break;
-//				case Protocol.POST:
-//					response = servlet.doPost(request, response);
-//					break;
-//				case Protocol.PUT:
-//					response = servlet.doPut(request, response);
-//					break;
-//				case Protocol.DELETE:
-//					response = servlet.doDelete(request, response);
-//					break;
-//				}
 
 			}else{
 				for(String s: uri){
@@ -209,7 +212,7 @@ public class ConnectionHandler implements Runnable {
 				// TODO: Fill in the rest of the code here
 			}
 
-			AbstractRequest req = map.get(request.getMethod());
+			AbstractRequest req = requestMap.get(request.getMethod());
 			req.setRequest(request);
 			req.setResponse(response);
 			System.out.println(req);

@@ -54,6 +54,8 @@ public class Server implements Runnable {
 	private HashMap<String, Integer> clientRequests;
 	private ArrayList<String> bannedClients;
 	private int counter;
+	
+	private HashMap<String, ConnectionHandler> clients;
 
 	/**
 	 * @param rootDirectory
@@ -72,6 +74,7 @@ public class Server implements Runnable {
 		// performance improvement - queue
 		this.clientRequests = new HashMap<String, Integer>();
 		this.bannedClients = new ArrayList<String>();
+		this.clients = new HashMap<String, ConnectionHandler>();
 	}
 
 	/**
@@ -153,12 +156,16 @@ public class Server implements Runnable {
 					break;
 
 				String key = "" + connectionSocket.getInetAddress();
+				String handlerKey = "" + connectionSocket.getPort(); 
+				
 				if (!this.bannedClients.contains(key)) {
 
 					// Create a handler for this incoming connection and start
 					// the handler in a new thread
 					ConnectionHandler handler = new ConnectionHandler(this, connectionSocket);
-
+					
+					this.clients.put(key + ":" + handlerKey, handler);
+					
 					Thread thread = new Thread(handler);
 
 					counter++;

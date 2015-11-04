@@ -1,6 +1,10 @@
 package plugins;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -19,8 +23,17 @@ public abstract class IPlugin {
 			
 			String requestType = line[0];
 			String uri = line[1];
-						
-			IServlet servlet = this.generateServlet(line);
+			
+			String jarName = configFile.toPath().toString().substring(configFile.toPath().toString().lastIndexOf('\\')+1, configFile.toPath().toString().lastIndexOf("."));
+			String jarUrl = "file:src\\plugins\\activePlugins\\" + jarName +".jar";
+			URL classUrl = new URL(jarUrl);
+			URL[] classUrls = { classUrl };
+			URLClassLoader urlClassLoader = new URLClassLoader(classUrls);
+			Class<?> beanClass = urlClassLoader.loadClass(jarName + "." +  line[2]);
+			
+			// Create a new instance from the loaded class
+			Constructor<?> constructor = beanClass.getConstructor();
+			IServlet servlet = (IServlet) constructor.newInstance();
 			
 			String key = requestType + ":" + uri;
 			
