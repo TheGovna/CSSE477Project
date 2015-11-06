@@ -13,7 +13,6 @@ public abstract class IPlugin {
 	HashMap<String, IServlet> servlets = new HashMap<String, IServlet>();
 
 	public IPlugin(File configFile) throws Exception {
-		//System.out.println(configFile);
 		System.out.println(configFile.toPath().toString());
 		Scanner sc = new Scanner(configFile);
 		

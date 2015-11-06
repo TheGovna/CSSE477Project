@@ -189,6 +189,20 @@ public class HttpResponse {
 		buffer.append("\n----------------------------------\n");
 		return buffer.toString();
 	}
+	
+	public byte[] getBytes(String key) {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(this.status);
+		buffer.append(Protocol.DELIMITER);
+		if(file != null) {
+			buffer.append("Data: ");
+			buffer.append(this.file.getAbsolutePath());
+		}
+		buffer.append(Protocol.DELIMITER);
+		buffer.append(key);
+
+		return buffer.toString().getBytes();
+	}
 
 	
 }

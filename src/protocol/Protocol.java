@@ -33,6 +33,7 @@ public class Protocol {
 	public static final String POST_QUEUE = "POST_QUEUE";
 	public static final String PUT_QUEUE = "PUT_QUEUE";
 	public static final String DELETE_QUEUE = "DELETE_QUEUE";
+	public static final String RESPONSE_QUEUE = "RESPONSE_QUEUE";
 	
 	// Escape characters
     public static final char SPACE = ' ';
@@ -103,7 +104,7 @@ public class Protocol {
     public static final String TXT = "TXT";
     public static final String HTML = "HTML";
     public static final String UNSUPPORTED_TYPE = "OTHER";
-	public static final String DELIMITER = "//|";
+	public static final String DELIMITER = "|";
     
     /**
      * Returns a formatted String containing server information.<br/>

@@ -21,6 +21,8 @@
 
 package server;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -29,8 +31,21 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import gui.WebServer;
+import gui.WorkerServer;
 import plugins.IPlugin;
 import plugins.WatchDir;
+import protocol.HttpRequest;
+import protocol.HttpResponse;
+import protocol.HttpResponseFactory;
+import protocol.Protocol;
+
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.Consumer;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
 
 /**
  * This represents a welcoming server for the incoming TCP request from a HTTP
@@ -52,16 +67,21 @@ public class Server implements Runnable {
 
 	private String host;
 	private HashMap<String, Integer> clientRequests;
+	private HashMap<HttpResponse, String> responseClients;
 	private ArrayList<String> bannedClients;
 	private int counter;
 	
-	private HashMap<String, ConnectionHandler> clients;
+	private ConnectionFactory factory;
+	private Connection connection;
+	private Channel channel;
+	
+	public HashMap<String, ConnectionHandler> clients;
 
 	/**
 	 * @param rootDirectory
 	 * @param port
 	 */
-	public Server(String rootDirectory, int port, String host, WebServer window) {
+	public Server(String rootDirectory, int port, String host, WebServer window) throws Exception {
 		this.rootDirectory = rootDirectory;
 		this.port = port;
 		this.host = host;
@@ -75,6 +95,62 @@ public class Server implements Runnable {
 		this.clientRequests = new HashMap<String, Integer>();
 		this.bannedClients = new ArrayList<String>();
 		this.clients = new HashMap<String, ConnectionHandler>();
+		
+		// create Worker Servers
+		WorkerServer wsGet = new WorkerServer(Protocol.GET_QUEUE, this);
+//		WorkerServer wsPut = new WorkerServer(Protocol.PUT_QUEUE, this);
+//		WorkerServer wsPost = new WorkerServer(Protocol.POST_QUEUE, this);
+//		WorkerServer wsDelete = new WorkerServer(Protocol.DELETE_QUEUE, this);
+		
+		wsGet.run();
+//		wsPut.run();
+//		wsPost.run();
+//		wsDelete.run();
+		
+		// retrieve responses from responses queue
+		factory = new ConnectionFactory();
+		factory.setHost("localhost");
+		connection = factory.newConnection();
+		channel = connection.createChannel();
+		boolean durable = true;
+		channel.queueDeclare(Protocol.RESPONSE_QUEUE, durable, false, false, null);
+		
+		channel.basicQos(1);
+		
+		final Consumer consumer = new DefaultConsumer(channel) {
+			@Override
+			public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+					throws IOException {
+				String message = new String(body, "UTF-8");
+				System.out.println(" [x] Received '" + message + "'");
+				try {
+					HttpResponse response;
+					
+					String[] requestParts = message.split("\\" + Protocol.DELIMITER);
+					String status = requestParts[0];
+					String key = requestParts[requestParts.length - 1];
+					
+					if (Integer.parseInt(status) == Protocol.OK_CODE) {
+						String file = requestParts[1];
+						File f = new File(file);
+						
+						response = HttpResponseFactory.createRequestWithFile(f, Protocol.CLOSE);
+					} else {
+						response = HttpResponseFactory.createRequest(status, Protocol.CLOSE);
+					}
+					
+					ConnectionHandler ch = clients.get(key);
+					
+					
+				} catch(Exception e) {
+					e.printStackTrace();
+				} finally {
+					System.out.println(" [x] Done");
+					channel.basicAck(envelope.getDeliveryTag(), false); // send a proper acknowledgment from the worker, once we're done with a task
+				}
+			}
+		};
+		channel.basicConsume(Protocol.RESPONSE_QUEUE, false, consumer);
 	}
 
 	/**
@@ -147,6 +223,8 @@ public class Server implements Runnable {
 
 			// Now keep welcoming new connections until stop flag is set to true
 			while (true) {
+				// getting responses from response queue
+				
 				// Listen for incoming socket connection
 				// This method block until somebody makes a request
 				Socket connectionSocket = this.welcomeSocket.accept();

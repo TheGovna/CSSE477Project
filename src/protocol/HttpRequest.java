@@ -44,6 +44,7 @@ public class HttpRequest implements Serializable{
 	private String method;
 	private String uri;
 	private String version;
+	private String key;
 	private Map<String, String> header;
 	private char[] body;
 	
@@ -60,12 +61,13 @@ public class HttpRequest implements Serializable{
 	 * @param body2
 	 */
 	public HttpRequest(String method, String uri, String version,
-			HashMap<String, String> header, String body) {
+			HashMap<String, String> header, String body, String key) {
 		this.method = method;
 		this.uri = uri;
 		this.version = version;
 		this.header = header;
 		this.body = body.toCharArray();
+		this.key = key;
 	}
 
 	/**
@@ -264,6 +266,23 @@ public class HttpRequest implements Serializable{
 			buffer.append(Protocol.DELIMITER);
 		}
 		buffer.append(this.body);
+		buffer.append(Protocol.DELIMITER);
+		buffer.append(this.key);
 		return buffer.toString().getBytes();
+	}
+
+	/**
+	 * @return
+	 */
+	public String getKey() {
+		return this.key;
+	}
+
+	/**
+	 * @param string
+	 */
+	public void setKey(String string) {
+		this.key = string;
+		
 	}
 }

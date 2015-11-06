@@ -202,7 +202,11 @@ public class WebServer extends JFrame {
 				String rootDirectory = WebServer.this.txtRootDirectory.getText();
 				
 				// Now run the server in non-gui thread
-				server = new Server(rootDirectory, port, host, WebServer.this);
+				try {
+					server = new Server(rootDirectory, port, host, WebServer.this);
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
 				rateUpdater = new ServiceRateUpdater();
 				
 				// Disable widgets

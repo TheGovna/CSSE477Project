@@ -209,18 +209,18 @@ public class WatchDir implements Runnable {
 		// NOTE: This URL is wrong because we want the path from the plugin project
 		String pluginFileUrl = jarName + ".txt";
 		InputStream is = getClass().getResourceAsStream(pluginFileUrl);
-		System.out.println("is: " + is);
+//		System.out.println("is: " + is);
 		byte[] buffer = new byte[is.available()];
 		is.read(buffer);
 		
 		InputStreamReader isr = new InputStreamReader(is);
 		BufferedReader br = new BufferedReader(isr);
 		
-		String line;
-		System.out.println("Printing buffered reader:");
-		while ((line = br.readLine()) != null) {
-			System.out.println(line);
-		}
+//		String line;
+//		System.out.println("Printing buffered reader:");
+//		while ((line = br.readLine()) != null) {
+//			System.out.println(line);
+//		}
 		
 		File f = new File("src\\plugins\\" + jarName + ".txt");
 

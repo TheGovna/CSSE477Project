@@ -25,6 +25,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -54,6 +55,7 @@ import protocol.PutRequest;
 public class ConnectionHandler implements Runnable {
 	private Server server;
 	private Socket socket;
+	private Organizer organizer;
 	
 	private long requestTimer;
 	private HashMap<String, AbstractRequest> requestMap;
@@ -61,10 +63,14 @@ public class ConnectionHandler implements Runnable {
 	ConnectionFactory factory;
 	Connection connection;
 	Channel channel;
+	
+	public HttpRequest request;
+	public HttpResponse response;
 
 	public ConnectionHandler(Server server, Socket socket) throws Exception {
 		this.server = server;
 		this.socket = socket;
+		this.organizer = new Organizer();
 		
 		this.requestMap = new HashMap<String, AbstractRequest>();
 		this.requestMap.put(Protocol.GET, new GetRequest(this.server));
@@ -123,41 +129,44 @@ public class ConnectionHandler implements Runnable {
 
 		// At this point we have the input and output stream of the socket
 		// Now lets create a HttpRequest object
-		HttpRequest request = null;
-		HttpResponse response = null;
+		request = null;
+		response = null;
 		try {
 			request = HttpRequest.read(inStream);
-			this.requestTimer = System.currentTimeMillis();
-
-			// Parse the request
-			String[] uri = request.getUri().split("/");
-			if (uri.length == 3) {
-				String requestTypeString = request.getMethod();
-				String pluginString = uri[1];
-				String servletString = uri[2];
-				
-				HashMap<String, IPlugin> plugins = this.server.getPlugins();
-				IPlugin currPlugin = plugins.get(pluginString);
-
-				if (currPlugin == null) {
-					throw new ProtocolException(Protocol.NOT_FOUND_CODE,
-							"This plugin doesn't exist");
-				}
-
-				IServlet servlet = currPlugin.getServlet(servletString);
-
-				if (servlet == null) {
-					throw new ProtocolException(Protocol.NOT_FOUND_CODE,
-							"This servlet doesn't exist");
-				}
-				System.out.println(requestTypeString);
-				response = servlet.processRequest(request, response);
-
-			}else{
-				for(String s: uri){
-					System.out.println(s);
-				}
-			}
+			request.setKey(this.socket.getInetAddress() + ":" + this.socket.getPort());
+			organizer.sendRequest(request);
+			
+//			this.requestTimer = System.currentTimeMillis();
+//
+//			// Parse the request
+//			String[] uri = request.getUri().split("/");
+//			if (uri.length == 3) {
+//				String requestTypeString = request.getMethod();
+//				String pluginString = uri[1];
+//				String servletString = uri[2];
+//				
+//				HashMap<String, IPlugin> plugins = this.server.getPlugins();
+//				IPlugin currPlugin = plugins.get(pluginString);
+//
+//				if (currPlugin == null) {
+//					throw new ProtocolException(Protocol.NOT_FOUND_CODE,
+//							"This plugin doesn't exist");
+//				}
+//
+//				IServlet servlet = currPlugin.getServlet(servletString);
+//
+//				if (servlet == null) {
+//					throw new ProtocolException(Protocol.NOT_FOUND_CODE,
+//							"This servlet doesn't exist");
+//				}
+//				System.out.println(requestTypeString);
+//				response = servlet.processRequest(request, response);
+//
+//			}else{
+//				for(String s: uri){
+//					System.out.println(s);
+//				}
+//			}
 		} catch (ProtocolException pe) {
 			// We have some sort of protocol exception. Get its status code and
 			// create response
@@ -179,96 +188,79 @@ public class ConnectionHandler implements Runnable {
 			response = HttpResponseFactory.createRequest("400", Protocol.CLOSE);
 		}
 
-		if (response != null) {
-			// Means there was an error, now write the response object to the
-			// socket
-			try {
-				response.write(socket.getOutputStream());
-				// System.out.println(response);
-			} catch (Exception e) {
-				// We will ignore this exception
-				e.printStackTrace();
-			}
-
+//		if (response != null) {
+//			// Means there was an error, now write the response object to the
+//			// socket
+//			try {
+//				response.write(socket.getOutputStream());
+//				// System.out.println(response);
+//			} catch (Exception e) {
+//				// We will ignore this exception
+//				e.printStackTrace();
+//			}
+//
 			// Increment number of connections by 1
 			server.incrementConnections(1);
 			// Get the end time
 			long end = System.currentTimeMillis();
 			this.server.incrementServiceTime(end - start);
-			return;
-		}
+//			return;
+//		}
 
 		// We reached here means no error so far, so lets process further
-		try {
-			// Fill in the code to create a response for version mismatch.
-			// You may want to use constants such as Protocol.VERSION,
-			// Protocol.NOT_SUPPORTED_CODE, and more.
-			// You can check if the version matches as follows
-			if (!request.getVersion().equalsIgnoreCase(Protocol.VERSION)) {
-				// Here you checked that the "Protocol.VERSION" string is not
-				// equal to the
-				// "request.version" string ignoring the case of the letters in
-				// both strings
-				// TODO: Fill in the rest of the code here
-			}
-
-			AbstractRequest req = requestMap.get(request.getMethod());
-			req.setRequest(request);
-			req.setResponse(response);
-			System.out.println(req);
-			response = req.execute();
-
-			/*
-			 * else if(request.getMethod().equalsIgnoreCase(Protocol.GET)) { //
-			 * Map<String, String> header = request.getHeader(); // String date
-			 * = header.get("if-modified-since"); // String hostName =
-			 * header.get("host");
-			 * 
-			 * // Handling GET request here // Get relative URI path from
-			 * request String uri = request.getUri(); // Get root directory path
-			 * from server String rootDirectory = server.getRootDirectory(); //
-			 * Combine them together to form absolute file path File file = new
-			 * File(rootDirectory + uri); // Check if the file exists
-			 * if(file.exists()) { if(file.isDirectory()) { // Look for default
-			 * index.html file in a directory String location = rootDirectory +
-			 * uri + System.getProperty("file.separator") +
-			 * Protocol.DEFAULT_FILE; file = new File(location);
-			 * if(file.exists()) { // Lets create 200 OK response response =
-			 * HttpResponseFactory.createRequest(file, Protocol.CLOSE); } else {
-			 * // File does not exist so lets create 404 file not found code
-			 * response =
-			 * HttpResponseFactory.createRequest("404",Protocol.CLOSE); } } else
-			 * { // Its a file // Lets create 200 OK response response =
-			 * HttpResponseFactory.createRequest(file, Protocol.CLOSE); } } else
-			 * { // File does not exist so lets create 404 file not found code
-			 * response =
-			 * HttpResponseFactory.createRequest("404",Protocol.CLOSE); } }
-			 */
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+//		try {
+//			// Fill in the code to create a response for version mismatch.
+//			// You may want to use constants such as Protocol.VERSION,
+//			// Protocol.NOT_SUPPORTED_CODE, and more.
+//			// You can check if the version matches as follows
+//			if (!request.getVersion().equalsIgnoreCase(Protocol.VERSION)) {
+//				// Here you checked that the "Protocol.VERSION" string is not
+//				// equal to the
+//				// "request.version" string ignoring the case of the letters in
+//				// both strings
+//				// TODO: Fill in the rest of the code here
+//			}
+//
+//			AbstractRequest req = requestMap.get(request.getMethod());
+//			req.setRequest(request);
+//			req.setResponse(response);
+//			System.out.println(req);
+//			response = req.execute();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 
 		// TODO: So far response could be null for protocol version mismatch.
 		// So this is a temporary patch for that problem and should be removed
 		// after a response object is created for protocol version mismatch.
-		if (response == null) {
-			response = HttpResponseFactory.createRequest("400", Protocol.CLOSE);
-		}
+//		if (response == null) {
+//			response = HttpResponseFactory.createRequest("400", Protocol.CLOSE);
+//		}
 
-		try {
-			// Write response and we are all done so close the socket
-			response.write(socket.getOutputStream());
-			System.out.println("It took " + (System.currentTimeMillis()-this.requestTimer) + " milliseconds to serve this request.");
-			socket.close();
-		} catch (Exception e) {
-			// We will ignore this exception
-			e.printStackTrace();
-		}
+//		try {
+//			// Write response and we are all done so close the socket
+//			response.write(socket.getOutputStream());
+//			System.out.println("It took " + (System.currentTimeMillis()-this.requestTimer) + " milliseconds to serve this request.");
+//			socket.close();
+//		} catch (Exception e) {
+//			// We will ignore this exception
+//			e.printStackTrace();
+//		}
 
 		// Increment number of connections by 1
-		server.incrementConnections(1);
-		// Get the end time
-		long end = System.currentTimeMillis();
-		this.server.incrementServiceTime(end - start);
+//		server.incrementConnections(1);
+//		// Get the end time
+//		long end = System.currentTimeMillis();
+//		this.server.incrementServiceTime(end - start);
+	}
+	
+	public void setResponse(HttpResponse response) {
+		try {
+			response.write(socket.getOutputStream());
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
