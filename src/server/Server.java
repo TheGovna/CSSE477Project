@@ -98,14 +98,22 @@ public class Server implements Runnable {
 		
 		// create Worker Servers
 		WorkerServer wsGet = new WorkerServer(Protocol.GET_QUEUE, this);
-//		WorkerServer wsPut = new WorkerServer(Protocol.PUT_QUEUE, this);
-//		WorkerServer wsPost = new WorkerServer(Protocol.POST_QUEUE, this);
-//		WorkerServer wsDelete = new WorkerServer(Protocol.DELETE_QUEUE, this);
+		WorkerServer wsGet2 = new WorkerServer(Protocol.GET_QUEUE, this);
+		WorkerServer wsPut = new WorkerServer(Protocol.PUT_QUEUE, this);
+		WorkerServer wsPost = new WorkerServer(Protocol.POST_QUEUE, this);
+		WorkerServer wsDelete = new WorkerServer(Protocol.DELETE_QUEUE, this);
 		
-		wsGet.run();
-//		wsPut.run();
-//		wsPost.run();
-//		wsDelete.run();
+		Thread getThread = new Thread(wsGet);
+		Thread get2Thread = new Thread(wsGet2);
+		Thread putThread = new Thread(wsPut);
+		Thread postThread = new Thread(wsPost);
+		Thread deleteThread = new Thread(wsDelete);
+		
+		getThread.start();
+		get2Thread.start();
+		putThread.start();
+		postThread.start();
+		deleteThread.start();
 		
 		// retrieve responses from responses queue
 		factory = new ConnectionFactory();
@@ -140,7 +148,7 @@ public class Server implements Runnable {
 					}
 					
 					ConnectionHandler ch = clients.get(key);
-					
+					ch.setResponse(response);
 					
 				} catch(Exception e) {
 					e.printStackTrace();

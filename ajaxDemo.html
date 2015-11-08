@@ -4,7 +4,13 @@
 
 <h2>AJAX</h2>
 
-<button type="button" onclick="loadDoc()">Say Hello</button>
+<button type="button" onclick="loadDoc()">Get All Books</button>
+
+ <button type="button" onclick="loadDoc()">Find Book</button>
+
+<button type="button" onclick="loadDoc()">Add/Modify Book</button>
+
+<button type="button" onclick="loadDoc()">Delete Book</button>
 
 <p id="demo"></p>
 
@@ -17,7 +23,7 @@ function loadDoc() {
       document.getElementById("demo").innerHTML = xhttp.responseText;
     }
   }
-  xhttp.open("GET", "localhost:8023/Plugin1/books", true);
+  xhttp.open("GET", "http://localhost:8023/Plugin1/books", true);
   xhttp.send();
 }
 </script>

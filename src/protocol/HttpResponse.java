@@ -195,7 +195,6 @@ public class HttpResponse {
 		buffer.append(this.status);
 		buffer.append(Protocol.DELIMITER);
 		if(file != null) {
-			buffer.append("Data: ");
 			buffer.append(this.file.getAbsolutePath());
 		}
 		buffer.append(Protocol.DELIMITER);

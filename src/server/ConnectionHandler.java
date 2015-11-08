@@ -31,8 +31,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.HashMap;
 
-import plugins.IPlugin;
-import plugins.IServlet;
 import protocol.AbstractRequest;
 import protocol.DeleteRequest;
 import protocol.GetRequest;
