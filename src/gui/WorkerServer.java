@@ -140,7 +140,7 @@ public class WorkerServer implements Runnable {
 			Connection connection2 = factory.newConnection();
 			Channel channel2 = connection2.createChannel();
 			boolean durable = true;
-			System.out.println("response: " + response.getBytes(request.getKey()));
+			//System.out.println("response: " + response.getBytes(request.getKey()));
 			channel2.queueDeclare(Protocol.RESPONSE_QUEUE, durable, false, false, null);
 			channel2.basicPublish("", Protocol.RESPONSE_QUEUE, MessageProperties.PERSISTENT_TEXT_PLAIN, response.getBytes(request.getKey()));
 		} catch (ProtocolException e) {
