@@ -1,4 +1,4 @@
-{	"Books" : [	{"title" : "Book 1",	"author" : "Author 1"},	{"title" : "Book 2",	"author" : "Author 2"},	{"title" : "Book 3",	"author" : "Author 2"}, {
+[	{		"author": "author1",		"title": "title1"	},	{		"author": "author2",		"title": "title2"	}, {
   "author": "SomeAuthor",
-  "title": "SomeBook"
-}]}
+  "title": "SomeTitle"
+}]
