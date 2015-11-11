@@ -1,5 +1,5 @@
 GET|/books|BooksGetter
-DELETE|/books|BooksDeleter
+DELETE|/book|BooksDeleter
 GET|/book|Book1Getter
-POST|/books|BooksPoster
+POST|/book|BooksPoster
 PUT|/book|BooksPutter
