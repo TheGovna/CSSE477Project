@@ -1,13 +1,14 @@
 import httplib
 import random
 import json
-from pprint import pprint
+import time
 
 def simulateTraffic():
 	requestTypes = ['GET', 'PUT', 'POST', 'DELETE'];
 	server = httplib.HTTPConnection('localhost', 8023)
 	server.connect()
 	while(1):
+		time.sleep(0.1)
 		randomRequest = random.choice(requestTypes)
 		
 		if randomRequest == 'GET':
@@ -17,9 +18,6 @@ def simulateTraffic():
 				# GET all books
 				print("Attempting GET ALL")
 				server.request('GET', '/Plugin1/books')
-
-				# if response.status == httplib.OK:
-				# 	print "GET: OK"
 			else:
 				# GET specific book
 				print("Attempting GET MODIFY")
@@ -40,17 +38,11 @@ def simulateTraffic():
 				randomTitleNumber = random.randint(1, 100)
 				server.request('PUT', '/Plugin1/book/' + randomBook['author'] + "/Title" + str(randomTitleNumber))
 
-			# if response.status == httplib.OK:
-			# 	print "PUT: OK"
-
 		elif randomRequest == 'POST':
 			print("Attempting POST")
 			randomAuthorNumber = random.randint(1, 100)
 			randomTitleNumber = random.randint(1, 100)
 			server.request('POST', '/Plugin1/book/Author' + str(randomAuthorNumber) + "/Title" + str(randomTitleNumber))
-
-			# if response.status == httplib.OK:
-			# 	print "POST: OK"
 		else:
 			# DELETE request
 			print("Attempting DELETE")
