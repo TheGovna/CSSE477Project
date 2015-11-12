@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import gui.WebServer;
-import gui.WorkerServer;
 import plugins.IPlugin;
 import plugins.WatchDir;
 import protocol.HttpRequest;
@@ -68,6 +67,7 @@ public class Server implements Runnable {
 	private String host;
 	private HashMap<String, Integer> clientRequests;
 	private HashMap<HttpResponse, String> responseClients;
+	private HashMap<Integer, String> responseCodes;
 	private ArrayList<String> bannedClients;
 	private int counter;
 	
@@ -95,6 +95,13 @@ public class Server implements Runnable {
 		this.clientRequests = new HashMap<String, Integer>();
 		this.bannedClients = new ArrayList<String>();
 		this.clients = new HashMap<String, ConnectionHandler>();
+		
+		// initialize responseCodes map
+		this.responseCodes = new HashMap<Integer, String>();
+		this.responseCodes.put(Protocol.OK_CODE, Protocol.GET);
+		this.responseCodes.put(Protocol.POST_CODE, Protocol.POST);
+		this.responseCodes.put(Protocol.PUT_CODE, Protocol.PUT);
+		this.responseCodes.put(Protocol.DELETE_CODE, Protocol.DELETE);
 		
 		// create Worker Servers
 		WorkerServer wsGet = new WorkerServer(Protocol.GET_QUEUE, this);
@@ -138,15 +145,17 @@ public class Server implements Runnable {
 					String status = requestParts[0];
 					String key = requestParts[requestParts.length - 1];
 					
-					if (Integer.parseInt(status) == Protocol.OK_CODE) {
+					String requestType = responseCodes.get(Integer.parseInt(status));
+					
+					
+					if (requestType != null) {
 						String file = requestParts[1];
 						File f = new File(file);
 						
-						response = HttpResponseFactory.createRequestWithFile(f, Protocol.CLOSE);
+						response = HttpResponseFactory.createRequestWithFile(f, Protocol.CLOSE, requestType);
 					} else {
 						response = HttpResponseFactory.createRequest(status, Protocol.CLOSE);
 					}
-					
 					ConnectionHandler ch = clients.get(key);
 					ch.setResponse(response);
 					

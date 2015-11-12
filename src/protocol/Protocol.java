@@ -45,10 +45,21 @@ public class Protocol {
 
     // Some useful protocol elements
     public static final String VERSION = "HTTP/1.1";
+    
+    // GET uses OK_CODE and OK_TEXT
     public static final String GET = "GET";
+    
     public static final String POST = "POST";
-	public static final String PUT = "PUT";
+    public static final int POST_CODE = 201;
+    public static final String POST_TEXT = "Created";
+	
+    public static final String PUT = "PUT";
+	public static final int PUT_CODE = 209;
+	 public static final String PUT_TEXT = "Modified";
+	
 	public static final String DELETE = "DELETE";
+	public static final int DELETE_CODE = 210;
+	 public static final String DELETE_TEXT = "Deleted";
     
     // Some useful http codes and text
     public static final int OK_CODE = 200;

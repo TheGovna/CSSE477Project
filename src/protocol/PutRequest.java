@@ -83,7 +83,7 @@ public class PutRequest extends AbstractRequest {
 				if (file.exists()) {
 					// Lets create 200 OK response
 					response = HttpResponseFactory.createRequestWithFile(file,
-							Protocol.CLOSE);
+							Protocol.CLOSE, Protocol.PUT);
 				} else {
 					// File does not exist so lets create 404 file not found
 					// code
@@ -100,7 +100,7 @@ public class PutRequest extends AbstractRequest {
 				bw.close();
 				// Lets create 200 OK response
 				response = HttpResponseFactory.createRequestWithFile(file,
-						Protocol.CLOSE);
+						Protocol.CLOSE, Protocol.PUT);
 			}
 		} else {
 			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
@@ -109,7 +109,7 @@ public class PutRequest extends AbstractRequest {
 			bw.close();
 			// File does not exist so lets create 404 file not found code
 			response = HttpResponseFactory.createRequestWithFile(file,
-					Protocol.CLOSE);
+					Protocol.CLOSE, Protocol.PUT);
 		}
 		return response;
 	}

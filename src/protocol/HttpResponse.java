@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -41,7 +42,7 @@ public class HttpResponse {
 	private String phrase;
 	private Map<String, String> header;
 	private File file;
-	
+	private static Map<Integer, Integer> responseCodes = new HashMap<Integer, Integer>();;
 
 	
 	/**
@@ -121,6 +122,13 @@ public class HttpResponse {
 	 * @throws Exception
 	 */
 	public void write(OutputStream outStream) throws Exception {
+		if (responseCodes.isEmpty()) {
+			responseCodes.put(Protocol.OK_CODE, Protocol.OK_CODE);
+			responseCodes.put(Protocol.POST_CODE, Protocol.POST_CODE);
+			responseCodes.put(Protocol.PUT_CODE, Protocol.PUT_CODE);
+			responseCodes.put(Protocol.DELETE_CODE, Protocol.DELETE_CODE);
+		}
+		
 		BufferedOutputStream out = new BufferedOutputStream(outStream, Protocol.CHUNK_LENGTH);
 
 		// First status line
@@ -143,7 +151,9 @@ public class HttpResponse {
 		out.write(Protocol.CRLF.getBytes());
 
 		// We are reading a file
-		if(this.getStatus() == Protocol.OK_CODE && file != null) {
+		boolean readingFile = (responseCodes.get(this.getStatus()) != null);
+		
+		if(readingFile && file != null) {
 			// Process text documents
 			FileInputStream fileInStream = new FileInputStream(file);
 			BufferedInputStream inStream = new BufferedInputStream(fileInStream, Protocol.CHUNK_LENGTH);

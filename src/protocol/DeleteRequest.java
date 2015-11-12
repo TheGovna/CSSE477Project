@@ -67,7 +67,7 @@ public class DeleteRequest extends AbstractRequest {
 					file.delete();
 					
 					// Lets create 200 OK response
-					response = HttpResponseFactory.createRequestWithFile(null, Protocol.CLOSE);
+					response = HttpResponseFactory.createRequestWithFile(null, Protocol.CLOSE, Protocol.DELETE);
 				}
 				else {
 					// File does not exist so lets create 404 file not found code
@@ -78,7 +78,7 @@ public class DeleteRequest extends AbstractRequest {
 				file.delete();
 				
 				// Lets create 200 OK response
-				response = HttpResponseFactory.createRequestWithFile(null, Protocol.CLOSE);
+				response = HttpResponseFactory.createRequestWithFile(null, Protocol.CLOSE, Protocol.DELETE);
 			}
 		}
 		else {

@@ -25,9 +25,11 @@ import java.io.File;
 import java.io.OutputStream;
 import java.net.FileNameMap;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * This is a factory to produce various kind of HTTP responses.
@@ -37,26 +39,21 @@ import java.util.HashMap;
 public class HttpResponseFactory {
 
 	private static HashMap<String, String[]> requestStrings = new HashMap<String, String[]>();
+	private static HashMap<String, String[]> responseCodes = new HashMap<String, String[]>();
 
 	public static HttpResponse createRequest(String type, String connection) {
-		//THIS IS BROKEN
 		if (requestStrings.isEmpty()) {
-			String[] codes = { Protocol.BAD_REQUEST_CODE + "",
-					Protocol.BAD_REQUEST_TEXT };
+			String[] codes = { Protocol.BAD_REQUEST_CODE + "", Protocol.BAD_REQUEST_TEXT };
 			requestStrings.put(Protocol.BAD_REQUEST_CODE + "", codes);
-			codes[0] = Protocol.NOT_FOUND_CODE + "";
-			codes[1] = Protocol.NOT_FOUND_TEXT;
-			requestStrings.put(Protocol.NOT_FOUND_CODE + "", codes);
-			codes[0] = Protocol.RESOURCE_NOT_MODIFIED_CODE + "";
-			codes[1] = Protocol.RESOURCE_NOT_MODIFIED_TEXT;
-			requestStrings.put(Protocol.RESOURCE_NOT_MODIFIED_CODE + "", codes);
-			codes[0] = Protocol.NOT_SUPPORTED_CODE + "";
-			codes[1] = Protocol.NOT_SUPPORTED_TEXT;
-			requestStrings.put(Protocol.NOT_SUPPORTED_CODE + "", codes);
+			String[] codes2 = { Protocol.NOT_FOUND_CODE + "", Protocol.NOT_FOUND_TEXT };
+			requestStrings.put(Protocol.NOT_FOUND_CODE + "", codes2);
+			String[] codes3 = { Protocol.RESOURCE_NOT_MODIFIED_CODE + "", Protocol.RESOURCE_NOT_MODIFIED_TEXT };
+			requestStrings.put(Protocol.RESOURCE_NOT_MODIFIED_CODE + "", codes3);
+			String[] codes4 = { Protocol.NOT_SUPPORTED_CODE + "", Protocol.NOT_SUPPORTED_TEXT };
+			requestStrings.put(Protocol.NOT_SUPPORTED_CODE + "", codes4);
 		}
 		String[] info = requestStrings.get(type);
-		HttpResponse response = new HttpResponse(Protocol.VERSION,
-				Integer.valueOf(info[0]), info[1],
+		HttpResponse response = new HttpResponse(Protocol.VERSION, Integer.valueOf(info[0]), info[1],
 				new HashMap<String, String>(), null);
 
 		// Lets fill up header fields with more information
@@ -77,8 +74,7 @@ public class HttpResponseFactory {
 	 *            Supported values are {@link Protocol#OPEN} and
 	 *            {@link Protocol#CLOSE}.
 	 */
-	private static void fillGeneralHeader(HttpResponse response,
-			String connection) {
+	private static void fillGeneralHeader(HttpResponse response, String connection) {
 		// Lets add Connection header
 		response.put(Protocol.CONNECTION, connection);
 
@@ -93,10 +89,24 @@ public class HttpResponseFactory {
 		response.put(Protocol.PROVIDER, Protocol.AUTHOR);
 	}
 
-	//For now this is only used to generate 200OK requests. That makes its name a little confusing, but it will probably be extended in the future.
-	public static HttpResponse createRequestWithFile(File file, String connection) {
-		HttpResponse response = new HttpResponse(Protocol.VERSION,
-				Protocol.OK_CODE, Protocol.OK_TEXT,
+	public static HttpResponse createRequestWithFile(File file, String connection, String requestType) {
+		if (responseCodes.isEmpty()) {
+			String[] codes = { "" + Protocol.OK_CODE, Protocol.OK_TEXT };
+			responseCodes.put(Protocol.GET, codes);
+
+			String[] codes2 = { "" + Protocol.POST_CODE, Protocol.POST_TEXT };
+			responseCodes.put(Protocol.POST, codes2);
+
+			String[] codes3 = { "" + Protocol.PUT_CODE, Protocol.PUT_TEXT };
+			responseCodes.put(Protocol.PUT, codes3);
+
+			String[] codes4 = { "" + Protocol.DELETE_CODE, Protocol.DELETE_TEXT };
+			responseCodes.put(Protocol.DELETE, codes4);
+		}
+
+		String[] codes = responseCodes.get(requestType);
+
+		HttpResponse response = new HttpResponse(Protocol.VERSION, Integer.parseInt(codes[0]), codes[1],
 				new HashMap<String, String>(), file);
 
 		// Lets fill up header fields with more information
@@ -107,15 +117,16 @@ public class HttpResponseFactory {
 			long timeSinceEpoch = file.lastModified();
 			Date modifiedTime = new Date(timeSinceEpoch);
 			response.put(Protocol.LAST_MODIFIED, modifiedTime.toString());
-	
+
 			// Lets get content length in bytes
 			long length = file.length();
 			response.put(Protocol.CONTENT_LENGTH, length + "");
-	
+
 			// Lets get MIME type for the file
 			FileNameMap fileNameMap = URLConnection.getFileNameMap();
 			String mime = fileNameMap.getContentTypeFor(file.getName());
-			// The fileNameMap cannot find mime type for all of the documents, e.g.
+			// The fileNameMap cannot find mime type for all of the documents,
+			// e.g.
 			// doc, odt, etc.
 			// So we will not add this field if we cannot figure out what a mime
 			// type is for the file.

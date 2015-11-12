@@ -19,7 +19,7 @@
  * 
  */
 
-package gui;
+package server;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -39,8 +39,6 @@ import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.MessageProperties;
-
-import server.Server;
 
 public class WorkerServer implements Runnable {
 	private String QUEUE_NAME;
