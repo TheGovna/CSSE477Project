@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import gui.WebServer;
-import gui.WorkerServer;
 import plugins.IPlugin;
 import plugins.WatchDir;
 import protocol.HttpRequest;
@@ -68,6 +67,7 @@ public class Server implements Runnable {
 	private String host;
 	private HashMap<String, Integer> clientRequests;
 	private HashMap<HttpResponse, String> responseClients;
+	private HashMap<Integer, String> responseCodes;
 	private ArrayList<String> bannedClients;
 	private int counter;
 	
@@ -96,16 +96,31 @@ public class Server implements Runnable {
 		this.bannedClients = new ArrayList<String>();
 		this.clients = new HashMap<String, ConnectionHandler>();
 		
+		// initialize responseCodes map
+		this.responseCodes = new HashMap<Integer, String>();
+		this.responseCodes.put(Protocol.OK_CODE, Protocol.GET);
+		this.responseCodes.put(Protocol.POST_CODE, Protocol.POST);
+		this.responseCodes.put(Protocol.PUT_CODE, Protocol.PUT);
+		this.responseCodes.put(Protocol.DELETE_CODE, Protocol.DELETE);
+		
 		// create Worker Servers
 		WorkerServer wsGet = new WorkerServer(Protocol.GET_QUEUE, this);
-//		WorkerServer wsPut = new WorkerServer(Protocol.PUT_QUEUE, this);
-//		WorkerServer wsPost = new WorkerServer(Protocol.POST_QUEUE, this);
-//		WorkerServer wsDelete = new WorkerServer(Protocol.DELETE_QUEUE, this);
+		WorkerServer wsGet2 = new WorkerServer(Protocol.GET_QUEUE, this);
+		WorkerServer wsPut = new WorkerServer(Protocol.PUT_QUEUE, this);
+		WorkerServer wsPost = new WorkerServer(Protocol.POST_QUEUE, this);
+		WorkerServer wsDelete = new WorkerServer(Protocol.DELETE_QUEUE, this);
 		
-		wsGet.run();
-//		wsPut.run();
-//		wsPost.run();
-//		wsDelete.run();
+		Thread getThread = new Thread(wsGet);
+		Thread get2Thread = new Thread(wsGet2);
+		Thread putThread = new Thread(wsPut);
+		Thread postThread = new Thread(wsPost);
+		Thread deleteThread = new Thread(wsDelete);
+		
+		getThread.start();
+		get2Thread.start();
+		putThread.start();
+		postThread.start();
+		deleteThread.start();
 		
 		// retrieve responses from responses queue
 		factory = new ConnectionFactory();
@@ -130,17 +145,19 @@ public class Server implements Runnable {
 					String status = requestParts[0];
 					String key = requestParts[requestParts.length - 1];
 					
-					if (Integer.parseInt(status) == Protocol.OK_CODE) {
+					String requestType = responseCodes.get(Integer.parseInt(status));
+					
+					
+					if (requestType != null) {
 						String file = requestParts[1];
 						File f = new File(file);
 						
-						response = HttpResponseFactory.createRequestWithFile(f, Protocol.CLOSE);
+						response = HttpResponseFactory.createRequestWithFile(f, Protocol.CLOSE, requestType);
 					} else {
 						response = HttpResponseFactory.createRequest(status, Protocol.CLOSE);
 					}
-					
 					ConnectionHandler ch = clients.get(key);
-					
+					ch.setResponse(response);
 					
 				} catch(Exception e) {
 					e.printStackTrace();

@@ -65,7 +65,7 @@ public class GetRequest extends AbstractRequest {
 				file = new File(location);
 				if(file.exists()) {
 					// Lets create 200 OK response
-					response = HttpResponseFactory.createRequestWithFile(file, Protocol.CLOSE);
+					response = HttpResponseFactory.createRequestWithFile(file, Protocol.CLOSE, Protocol.GET);
 				}
 				else {
 					// File does not exist so lets create 404 file not found code
@@ -74,7 +74,7 @@ public class GetRequest extends AbstractRequest {
 			}
 			else { // Its a file
 				// Lets create 200 OK response
-				response = HttpResponseFactory.createRequestWithFile(file, Protocol.CLOSE);
+				response = HttpResponseFactory.createRequestWithFile(file, Protocol.CLOSE, Protocol.GET);
 			}
 		}
 		else {
